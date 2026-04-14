@@ -1,0 +1,74 @@
+"""T.M.O.S — Config Module
+Persistent settings stored in ~/.tmos/config.json.
+Handles API keys, backend preference, and other user settings.
+"""
+
+import json
+import os
+from typing import Any
+
+DATA_DIR  = os.path.join(os.path.expanduser('~'), '.tmos')
+CONFIG_FILE = os.path.join(DATA_DIR, 'config.json')
+os.makedirs(DATA_DIR, exist_ok=True)
+
+_DEFAULTS: dict[str, Any] = {
+    'ai_backend':      'groq',          # 'groq' | 'gemini' | 'ollama'
+    'gemini_api_key':  '',
+    'gemini_model':    'gemini-2.0-flash',
+    'groq_api_key':    '',
+    'groq_model':      'llama-3.3-70b-versatile',
+    'ollama_model':    'qwen2.5',
+    'wake_word':       'tmos',          # e.g. "tmos" or "hey tmos"
+    'always_listen':   True,            # continuous wake-word listening
+    'voice_enabled':   True,
+}
+
+
+def _mask(k: str) -> str:
+    return k[:6] + '...' + k[-4:] if len(k) > 10 else ('***' if k else '')
+
+_config: dict[str, Any] = {}
+
+
+def _load() -> None:
+    global _config
+    _config = dict(_DEFAULTS)
+    if os.path.exists(CONFIG_FILE):
+        try:
+            with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+                _config.update(json.load(f))
+        except (json.JSONDecodeError, IOError):
+            pass
+
+
+def _save() -> None:
+    try:
+        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+            json.dump(_config, f, indent=2)
+    except IOError:
+        pass
+
+
+_load()
+
+
+def get(key: str, default: Any = None) -> Any:
+    return _config.get(key, default if default is not None else _DEFAULTS.get(key))
+
+
+def set_value(key: str, value: Any) -> None:
+    _config[key] = value
+    _save()
+
+
+def get_all() -> dict:
+    # Don't expose API key in full — return masked version
+    c = dict(_config)
+    c['gemini_api_key'] = _mask(c.get('gemini_api_key', ''))
+    c['groq_api_key']   = _mask(c.get('groq_api_key', ''))
+    return c
+
+
+def update(values: dict) -> None:
+    _config.update(values)
+    _save()
