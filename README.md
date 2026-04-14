@@ -21,7 +21,7 @@ A futuristic desktop AI assistant with always-on wake-word listening, an animate
 
 ## Screenshots
 
-*(add your own here after first run — the `web-wrap` orb, three-backend toggle, settings modal)*
+<img width="1279" height="792" alt="image" src="https://github.com/user-attachments/assets/5bb87b02-5794-464f-8e94-9afa5d3aa54c" />
 
 ---
 
@@ -154,8 +154,6 @@ Config lives at `~/.tmos/config.json` and is created automatically. Keys in the 
   "voice_enabled":  true
 }
 ```
-
-**Do not commit this file** — it contains your API keys. `.gitignore` already excludes `.tmos/` and `config.json`.
 
 ---
 
