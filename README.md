@@ -1,4 +1,4 @@
-# T.M.O.S — Total Machine Operating System
+# T.M.O.S — Desktop AI Assistant
 
 A futuristic desktop AI assistant with always-on wake-word listening, an animated "web" orb, and three swappable AI backends (Groq, Gemini, Ollama). Built with PyQt6 + QWebEngine and a pure-SVG animated frontend.
 
