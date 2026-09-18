@@ -36,7 +36,7 @@ from PyQt6.QtWebChannel import QWebChannel
 import commands
 from bridge import Bridge
 from commands import Reply
-from modules import config, history, stt, tools, tts
+from modules import config, history, mic, stt, tools, tts
 
 # ── Colour palette (title bar only — content is HTML) ────────────────────────
 _DARK   = '#020b14'
@@ -131,7 +131,7 @@ class VoiceWorker(QThread):
         try:
             import speech_recognition as sr
             rec = sr.Recognizer()
-            with sr.Microphone() as src:
+            with sr.Microphone(device_index=mic.resolve()[0]) as src:
                 rec.adjust_for_ambient_noise(src, duration=0.3)
                 audio = rec.listen(src, timeout=6, phrase_time_limit=12)
             self.result.emit(stt.recognize(rec, audio))
@@ -147,7 +147,8 @@ def wake_pattern(word: str) -> re.Pattern:
     'T.M.O.S.', 'team OS', 'temos'… optionally preceded by hey/ok."""
     word = (word or 'tmos').strip().lower()
     if word == 'tmos':
-        core = r't[\s.\-]*m[\s.\-]*o[\s.\-]*s|temos|team\s*os|tee\s*mos|timos|t\s*moss'
+        # t-mos, T.M.O.S, temos, timos, Timo's, team OS, tea moss, teemo's…
+        core = r"t(?:ee|ea|i|e)?[\s.\-']*m+[\s.\-']*o+[\s.\-']*s+"
     else:
         core = r'[\s.\-]*'.join(re.escape(c) for c in word.replace(' ', ''))
     return re.compile(rf'\b(?:(?:hey|hi|ok|okay)[\s,]+)?(?:{core})\b[\s,.!?:;-]*', re.IGNORECASE)
@@ -193,19 +194,20 @@ class WakeWordListener(QThread):
         rec.pause_threshold = 0.6
 
         self._running = True
+        device, device_name = mic.resolve()
         try:
-            mic = sr.Microphone()
-            with mic as src:
+            source = sr.Microphone(device_index=device)
+            with source as src:
                 rec.adjust_for_ambient_noise(src, duration=1.0)
         except Exception as e:
-            self.status_msg.emit(f'Mic init error: {e}')
+            self.status_msg.emit(f'Mic init error ({device_name}): {e}')
             return
-        self.status_msg.emit(f'Wake-word listener started ({stt.engine()} speech recognition).')
+        self.status_msg.emit(f'🎙 Listening on "{device_name}" ({stt.engine()} speech recognition).')
 
         while self._running:
             try:
                 started = time.time()
-                with mic as src:
+                with source as src:
                     audio = rec.listen(src, timeout=5, phrase_time_limit=8)
                 if not self._running:
                     break
@@ -228,6 +230,7 @@ class WakeWordListener(QThread):
                         self.stop_heard.emit()
                     continue
                 if cmd is None:
+                    self.status_msg.emit(f'Heard (no wake word): "{text[:80]}"')
                     continue
 
                 self.wake_fired.emit()
@@ -239,7 +242,7 @@ class WakeWordListener(QThread):
                 self.status_msg.emit('Wake word detected — listening for a command...')
                 self.listening.emit(True)
                 try:
-                    with mic as src:
+                    with source as src:
                         audio2 = rec.listen(src, timeout=5, phrase_time_limit=12)
                     cmd2 = stt.recognize(rec, audio2).strip()
                     if cmd2:
@@ -375,6 +378,7 @@ class TmosWindow(QMainWindow):
             print(f'[Hotkey] {msg}')
 
         # ── Start always-listen if enabled ────────────────────────────────────
+        mic.list_inputs()      # scan microphones once, before any audio thread starts
         if config.get('always_listen'):
             QTimer.singleShot(1500, self._start_wake_listener)
 
@@ -792,11 +796,20 @@ class TmosWindow(QMainWindow):
         self._start_thread(self._wake_listener)
         self.log('👂 Always-listen: ON', 'ok')
 
-    def _stop_wake_listener(self):
+    def _stop_wake_listener(self, quiet: bool = False):
+        # The old thread may still be inside a 5 s listen(); it exits on its own
+        # (kept alive in self._threads), so a new listener can start right away.
         if self._wake_listener and self._wake_listener.isRunning():
             self._wake_listener.stop()
-            self._wake_listener.wait(2000)
-            self.log('Always-listen: OFF', 'sys')
+            if not quiet:
+                self.log('Always-listen: OFF', 'sys')
+        self._wake_listener = None
+
+    def restart_listeners(self):
+        """Pick up a new microphone choice."""
+        if self._wake_listener is not None:
+            self._stop_wake_listener(quiet=True)
+            self._start_wake_listener()
 
     def _set_always_listen(self, enabled: bool):
         if enabled:
@@ -946,6 +959,14 @@ def _already_running() -> bool:
 
 
 def main():
+    # If Qt/Chromium ever crashes hard, leave a Python traceback of every thread behind.
+    import faulthandler
+    global _crash_log
+    _crash_log = open(os.path.join(config.DATA_DIR, 'crash.log'), 'a', encoding='utf-8')
+    _crash_log.write(f'\n=== T.M.O.S started {datetime.now():%Y-%m-%d %H:%M:%S} ===\n')
+    _crash_log.flush()
+    faulthandler.enable(_crash_log, all_threads=True)
+
     if sys.platform == 'win32':
         import ctypes
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('tmos.desktop.assistant')

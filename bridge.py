@@ -154,6 +154,11 @@ class Bridge(QObject):
             'ai_tools':   bool(s.get('ai_tools', True)),
         })
 
+        mic_device = (s.get('mic_device') or '').strip()
+        if mic_device != (config.get('mic_device') or ''):
+            config.set_value('mic_device', mic_device)
+            self._win.restart_listeners()
+
         voice = bool(s.get('voice_enabled', True))
         if voice == tts.is_muted():
             tts.set_muted(not voice)
@@ -233,8 +238,10 @@ class Bridge(QObject):
         self.model_pushed.emit(ai.get_model())
 
     def _push_config(self):
-        from modules import autostart, config, hotkey, tts
+        from modules import autostart, config, hotkey, mic, tts
         c = config.get_all()
+        c['mics'] = [m['name'] for m in mic.list_inputs()]
+        c['mic_active'] = mic.resolve()[1]
         c['start_with_windows'] = autostart.is_enabled()
         c['voices'] = tts.VOICES
         c['hotkey_pretty'] = hotkey.pretty(c.get('hotkey') or '') if c.get('hotkey') else ''

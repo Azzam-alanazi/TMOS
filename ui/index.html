@@ -1411,6 +1411,11 @@ select option { background: var(--panel); color: var(--text); }
           </select>
           <div class="field-help">Arabic replies are read with an Arabic voice automatically.</div>
         </div>
+
+        <div class="field-group">
+          <label class="field-label" for="cfg-mic">Microphone <span class="hint" id="mic-active"></span></label>
+          <select id="cfg-mic"></select>
+        </div>
       </div>
 
       <div class="modal-section">
@@ -2248,6 +2253,13 @@ function applyConfig(c) {
   for (const [id, name] of Object.entries(c.voices || {})) voices.add(new Option(name, id));
   voices.value = c.tts_voice;
 
+  const mics = $('cfg-mic');
+  mics.innerHTML = '';
+  mics.add(new Option('Automatic (skips virtual webcam mics)', ''));
+  for (const name of c.mics || []) mics.add(new Option(name, name));
+  mics.value = c.mic_device || '';
+  $('mic-active').textContent = c.mic_active ? 'using: ' + c.mic_active : '';
+
   for (const [k, id] of [['groq_api_key', 'groq-status'], ['gemini_api_key', 'gemini-status']]) {
     const set = c['has_' + k];
     $(id).textContent = set ? '✓ saved ' + c[k] : 'not set';
@@ -2283,6 +2295,7 @@ function saveSettings() {
       voice_enabled:      $('cfg-voice').checked,
       tts_voice:          $('cfg-tts-voice').value,
       stt_engine:         $('cfg-stt').value,
+      mic_device:         $('cfg-mic').value,
       ai_tools:           $('cfg-tools').checked,
       hotkey:             $('cfg-hotkey').value.trim().toLowerCase(),
       start_with_windows: $('cfg-startup').checked,

@@ -22,6 +22,7 @@ _DEFAULTS: dict[str, Any] = {
     'wake_word':       'tmos',          # e.g. "tmos" or "hey tmos"
     'always_listen':   True,            # continuous wake-word listening
     'stt_engine':      'google',        # 'google' (free) | 'groq' (Whisper, needs Groq key)
+    'mic_device':      '',              # microphone name; '' = automatic (skips virtual webcam mics)
     'voice_enabled':   True,
     'tts_voice':       'en-US-ChristopherNeural',
     'hotkey':          'ctrl+shift+space',
