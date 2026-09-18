@@ -1,16 +1,20 @@
 """T.M.O.S — Weather Module
-Current conditions, free and without an API key:
-  - a named city → Open-Meteo (its geocoder picks the right "Riyadh"; wttr.in's
-    picks a town in South Africa)
-  - no city     → wttr.in, which finds your location from your IP address
+Current conditions and a forecast of up to 7 days, free and without an API key,
+from Open-Meteo:
+  - a named city → its geocoder picks the right "Riyadh" (wttr.in's picks a
+    town in South Africa); "Paris, Texas" narrows it down
+  - no city     → the user's location (modules/location.py); wttr.in, which
+    guesses from the IP address, only when that lookup fails
 """
 
-from urllib.parse import quote
+from datetime import date
 
 import requests
 
-GEOCODE_URL  = 'https://geocoding-api.open-meteo.com/v1/search'
+from modules import location
+
 FORECAST_URL = 'https://api.open-meteo.com/v1/forecast'
+MAX_DAYS = 7
 
 # WMO weather codes used by Open-Meteo
 _WMO = {
@@ -24,45 +28,87 @@ _WMO = {
 }
 
 
-def get_weather(city: str = '') -> dict:
-    """Current weather for a city, or for your location (by IP) when city is empty."""
+def get_weather(city: str = '', days: int = 1) -> dict:
+    """Current weather for a city, or for the user's location when city is empty.
+    days > 1 adds a daily 'forecast' list (today first)."""
     city = city.strip()
     try:
-        return _open_meteo(city) if city else _wttr_here()
+        days = max(1, min(int(days or 1), MAX_DAYS))
+    except (TypeError, ValueError):
+        days = 1
+    try:
+        if city:
+            place = location.geocode(city)
+            if not place:
+                return {'success': False, 'message': f'Could not find a place called "{city}".'}
+        else:
+            place = location.get()
+            if not place.get('success'):
+                if place.get('off'):
+                    return {'success': False, 'message': "Location is off in Settings, so I don't know "
+                                                         'where you are. Name a city, e.g. `weather in Riyadh`.'}
+                return _wttr_here()
+        return _open_meteo(place, days)
     except requests.exceptions.ConnectionError:
         return {'success': False, 'message': 'No internet connection.'}
     except requests.exceptions.Timeout:
         return {'success': False, 'message': 'The weather service timed out.'}
-    except (KeyError, IndexError, TypeError, ValueError):
+    except (requests.RequestException, KeyError, IndexError, TypeError, ValueError):
         return {'success': False, 'message': f'Could not get the weather{" for " + city if city else ""}.'}
 
 
-def _open_meteo(city: str) -> dict:
-    name = city.split(',')[0].strip()
-    geo = requests.get(GEOCODE_URL, params={'name': name, 'count': 1, 'language': 'en'},
-                       timeout=10).json()
-    if not geo.get('results'):
-        return {'success': False, 'message': f'Could not find a place called "{city}".'}
-    place = geo['results'][0]
+def _open_meteo(place: dict, days: int) -> dict:
     data = requests.get(FORECAST_URL, params={
-        'latitude': place['latitude'], 'longitude': place['longitude'],
+        'latitude': place['lat'], 'longitude': place['lon'],
         'current': 'temperature_2m,apparent_temperature,relative_humidity_2m,'
                    'wind_speed_10m,weather_code',
-        'daily': 'temperature_2m_max,temperature_2m_min',
-        'timezone': 'auto', 'forecast_days': 1,
+        'daily': 'weather_code,temperature_2m_max,temperature_2m_min,'
+                 'precipitation_probability_max,sunrise,sunset',
+        'timezone': 'auto', 'forecast_days': days,
     }, timeout=10).json()
-    cur, daily = data['current'], data.get('daily', {})
-    return {
+    cur, daily = data['current'], data.get('daily') or {}
+    forecast = [_day(daily, i) for i in range(len(daily.get('time') or []))]
+    today = forecast[0] if forecast else {}
+    w = {
         'success':  True,
-        'place':    place['name'],
+        'place':    ', '.join(p for p in (place.get('area'), place.get('city')) if p)
+                    or location.label(place),
         'country':  place.get('country', ''),
         'temp_c':   round(cur['temperature_2m']),
         'feels_c':  round(cur['apparent_temperature']),
         'desc':     _WMO.get(cur['weather_code'], 'Unknown conditions'),
         'humidity': round(cur['relative_humidity_2m']),
         'wind_kmh': round(cur['wind_speed_10m']),
-        'high_c':   round(daily['temperature_2m_max'][0]) if daily.get('temperature_2m_max') else None,
-        'low_c':    round(daily['temperature_2m_min'][0]) if daily.get('temperature_2m_min') else None,
+        'high_c':   today.get('high_c'),
+        'low_c':    today.get('low_c'),
+        'rain_chance': today.get('rain_chance'),
+        'sunrise':  today.get('sunrise'),
+        'sunset':   today.get('sunset'),
+    }
+    if days > 1:
+        w['forecast'] = forecast
+    return w
+
+
+def _day(daily: dict, i: int) -> dict:
+    def val(key):
+        vals = daily.get(key) or []
+        return vals[i] if i < len(vals) else None
+
+    def hhmm(iso):
+        return iso[11:16] if isinstance(iso, str) and len(iso) >= 16 else None
+
+    d = date.fromisoformat(daily['time'][i])
+    hi, lo, rain = val('temperature_2m_max'), val('temperature_2m_min'), val('precipitation_probability_max')
+    return {
+        'date': d.isoformat(),
+        'day': 'Today' if i == 0 else 'Tomorrow' if i == 1 else f'{d:%A}',
+        'desc': _WMO.get(val('weather_code'), 'Unknown conditions'),
+        'high_c': round(hi) if hi is not None else None,
+        'low_c': round(lo) if lo is not None else None,
+        'rain_chance': round(rain) if rain is not None else None,
+        'sunrise': hhmm(val('sunrise')),
+        'sunset': hhmm(val('sunset')),
     }
 
 
@@ -89,14 +135,30 @@ def _wttr_here() -> dict:
     }
 
 
-def describe(w: dict) -> str:
-    """Markdown summary of a get_weather() result."""
+def describe(w: dict, day: int | None = None) -> str:
+    """Markdown summary of a get_weather() result. day=1 describes tomorrow only;
+    a result with a forecast lists every day."""
     if not w.get('success'):
         return w.get('message', 'Weather unavailable.')
     where = w['place'] + (f", {w['country']}" if w.get('country') else '')
+    forecast = w.get('forecast') or []
+    if day is not None and day < len(forecast):
+        f = forecast[day]
+        return f"**{where}, {f['day'].lower()}**: {_day_text(f)}."
     text = (f"**{where}**: {w['temp_c']}°C, {w['desc'].lower()} "
             f"(feels like {w['feels_c']}°C).")
     if w.get('high_c') is not None:
         text += f" High {w['high_c']}° / low {w['low_c']}°."
+    if w.get('rain_chance'):
+        text += f" {w['rain_chance']}% chance of rain."
     text += f" Humidity {w['humidity']}%, wind {w['wind_kmh']} km/h."
+    if len(forecast) > 1:
+        text += '\n' + '\n'.join(f"• **{f['day']}**: {_day_text(f)}" for f in forecast[1:])
+    return text
+
+
+def _day_text(f: dict) -> str:
+    text = f"{f['desc'].lower()}, {f['high_c']}° / {f['low_c']}°"
+    if f.get('rain_chance'):
+        text += f", {f['rain_chance']}% chance of rain"
     return text

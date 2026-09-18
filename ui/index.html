@@ -906,6 +906,10 @@ select option { background: var(--panel); color: var(--text); }
 }
 .api-link:hover { text-decoration: underline; }
 
+.memory-list { display: flex; flex-direction: column; gap: 5px; max-height: 150px; overflow-y: auto; }
+.memory-list .list-empty { padding: 4px 2px; }
+.field-help .api-link { font-size: 10px; }
+
 /* ── Scrollbars ───────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -1107,9 +1111,35 @@ select option { background: var(--panel); color: var(--text); }
           <label class="field-check">
             <input type="checkbox" id="cfg-tools" checked>
             <span>Let the AI act on this PC
-              <small>Open apps and sites, set reminders and timers, save notes, check weather and stats. It can never delete files or shut down.</small></span>
+              <small>Search the web, open apps and sites, set reminders and timers, control music and volume, save notes, check weather and stats. It can never delete files or shut down.</small></span>
           </label>
         </div>
+
+        <div class="field-group">
+          <label class="field-label">Memory <span class="hint">what T.M.O.S remembers about you · say “remember that…”</span></label>
+          <div class="memory-list" id="memory-list"></div>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="section-title">Location</div>
+
+        <div class="field-group">
+          <label class="field-label" for="cfg-loc-mode">Your location</label>
+          <select id="cfg-loc-mode" onchange="syncLocationFields()">
+            <option value="auto">Automatic: Windows location, else your IP address</option>
+            <option value="manual">A place I choose</option>
+            <option value="off">Off: don't look it up or tell the AI</option>
+          </select>
+        </div>
+
+        <div class="field-group" id="loc-place-group">
+          <label class="field-label" for="cfg-loc-place">Place</label>
+          <input type="text" id="cfg-loc-place" placeholder="e.g. Riyadh, or Paris, France" maxlength="100">
+        </div>
+
+        <div class="field-help" id="loc-status"></div>
+        <div class="field-help" id="loc-hint"></div>
       </div>
 
       <div class="modal-section">
@@ -1663,11 +1693,11 @@ function setBar(id, pct, label) {
 // ══════════════════════════════════════════════════════════════════════════
 let _thinking = null;
 const SUGGESTIONS = [
-  "What's the weather?",
+  "What's the weather this week?",
+  "What's the latest tech news?",
   'Open Spotify and remind me at 5pm to stretch',
-  'Set a 10 minute timer for tea',
+  'Find a coffee shop near me',
   'How is my PC doing?',
-  'Explain black holes in 3 sentences',
 ];
 
 function scrollChat(force) {
@@ -2003,9 +2033,10 @@ function addNote() {
 }
 
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-del-rem],[data-cancel-timer],[data-del-note],[data-copy-note]');
+  const t = e.target.closest('[data-del-rem],[data-cancel-timer],[data-del-note],[data-copy-note],[data-forget-fact]');
   if (!t || !bridge) return;
-  if (t.dataset.delRem) bridge.del_reminder(t.dataset.delRem);
+  if (t.dataset.forgetFact) bridge.forget_fact(t.dataset.forgetFact);
+  else if (t.dataset.delRem) bridge.del_reminder(t.dataset.delRem);
   else if (t.dataset.cancelTimer) bridge.cancel_timer(t.dataset.cancelTimer);
   else if (t.dataset.delNote) bridge.del_note(t.dataset.delNote);
   else if (t.dataset.copyNote) bridge.copy_text(t.dataset.copyNote);
@@ -2082,6 +2113,8 @@ function applyConfig(c) {
   $('cfg-orb').value = c.orb_style || 'nebula';
   ORB.setStyle(c.orb_style || 'nebula');
   $('hotkey-error').textContent = c.hotkey_error || '';
+  applyLocation(c);
+  renderMemory(c.memory || []);
 
   const voices = $('cfg-tts-voice');
   voices.innerHTML = '';
@@ -2109,9 +2142,48 @@ function applyConfig(c) {
   $('input-hint').textContent = (c.hotkey_pretty && !c.hotkey_error ? c.hotkey_pretty + ' summon · ' : '') + '↑ history · Esc stop';
 }
 
+function applyLocation(c) {
+  // Don't overwrite what the user is typing while the dialog is open
+  if (!$('settings-modal').classList.contains('open')) {
+    $('cfg-loc-mode').value = c.location_mode || 'auto';
+    $('cfg-loc-place').value = c.location_place || '';
+  }
+  const st = c.location_status || {};
+  $('loc-status').textContent = st.text || '';
+  $('loc-hint').innerHTML = st.hint
+    ? esc(st.hint) + ' <a class="api-link" onclick="bridge && bridge.open_location_settings()">Open Windows location settings →</a>'
+    : '';
+  syncLocationFields();
+}
+
+function syncLocationFields() {
+  const mode = $('cfg-loc-mode').value;
+  $('loc-place-group').style.display = mode === 'manual' ? '' : 'none';
+  const saved = (_config && _config.location_mode) || 'auto';
+  $('loc-status').style.display = $('loc-hint').style.display = mode === saved ? '' : 'none';
+}
+
+function renderMemory(list) {
+  const el = $('memory-list');
+  if (!list.length) {
+    el.innerHTML = '<div class="list-empty">Nothing yet. Say “remember that my sister is Sara”, or tell the AI about yourself.</div>';
+    return;
+  }
+  el.innerHTML = list.map(f =>
+    `<div class="item"><div class="item-main"><div class="item-text">${esc(f.text)}</div>` +
+    `<div class="item-meta">${esc(f.created || '')}</div></div>` +
+    `<button class="del-btn" data-forget-fact="${esc(f.id)}" title="Forget this">×</button></div>`
+  ).join('');
+}
+
 function openSettings() {
   $('cfg-groq-key').value = '';
   $('cfg-api-key').value = '';
+  if (_config) {
+    $('cfg-loc-mode').value = _config.location_mode || 'auto';
+    $('cfg-loc-place').value = _config.location_place || '';
+    syncLocationFields();
+  }
   $('settings-modal').classList.add('open');
   ($('cfg-groq-key').placeholder.startsWith('gsk') ? $('cfg-groq-key') : $('cfg-wake')).focus();
 }
@@ -2135,6 +2207,8 @@ function saveSettings() {
       hotkey:             $('cfg-hotkey').value.trim().toLowerCase(),
       start_with_windows: $('cfg-startup').checked,
       orb_style:          $('cfg-orb').value,
+      location_mode:      $('cfg-loc-mode').value,
+      location_place:     $('cfg-loc-place').value.trim(),
     }));
   }
   closeSettings();

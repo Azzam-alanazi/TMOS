@@ -19,6 +19,8 @@ _DEFAULTS: dict[str, Any] = {
     'groq_model':      'openai/gpt-oss-120b',
     'ollama_model':    'qwen2.5',
     'ai_tools':        True,            # let the AI open apps, set reminders, etc.
+    'location_mode':   'auto',          # 'auto' (Windows location, else IP) | 'manual' | 'off'
+    'location_place':  '',              # the place used when location_mode is 'manual'
     'wake_word':       'tmos',          # e.g. "tmos" or "hey tmos"
     'always_listen':   True,            # continuous wake-word listening
     'stt_engine':      'auto',          # 'auto' | 'local' (Vosk) | 'groq' | 'gemini' | 'google'

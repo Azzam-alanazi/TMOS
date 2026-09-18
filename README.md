@@ -1,6 +1,6 @@
 # T.M.O.S — Desktop AI Assistant
 
-A futuristic desktop AI assistant with always-on wake-word listening, an animated orb (four styles), and three swappable AI backends (Groq, Gemini, Ollama) that can act on your PC. Built with PyQt6 + QWebEngine.
+A futuristic desktop AI assistant with always-on wake-word listening, an animated orb (four styles), and three swappable AI backends (Groq, Gemini, Ollama) that can act on your PC, search the web, know where you are and remember what you tell them. Built with PyQt6 + QWebEngine.
 
 > Say **"TMOS, what's the weather?"** — no buttons required.
 
@@ -9,13 +9,17 @@ A futuristic desktop AI assistant with always-on wake-word listening, an animate
 ## Features
 
 - **Three AI backends, one toggle**: Groq (fast + free), Google Gemini (online), or Ollama (local & private). Swap at runtime. They share one conversation memory, which survives restarts.
-- **The AI can act on your PC (tool calling)**: *"open Spotify and remind me at 5 to stretch"* just works. The AI can open apps and sites, search, set reminders and timers, save and read notes, check weather and system stats, use the clipboard, take screenshots and lock the PC. It can never delete files or shut down; those stay behind explicit commands.
+- **The AI can act on your PC (tool calling)**: *"open Spotify and remind me at 5 to stretch"* just works. The AI can open apps and sites, set reminders and timers, save and read notes, check weather and system stats, control music and volume, use the clipboard, take screenshots and lock the PC. It can never delete files or shut down; those stay behind explicit commands.
+- **Knows where you are**: Windows location (street level) when it's switched on, otherwise your IP address (city level), or a place you pick in Settings. The AI gets it with every question, so *"weather tomorrow"*, *"what time is it in Tokyo?"* and *"find a pharmacy near me"* need no city. Turn it off in Settings and nothing is looked up.
+- **Looks things up on the web**: for news, prices, scores or anything recent, the AI searches the internet (no API key needed) and can read a page to answer from it.
+- **Remembers you**: *"remember that my sister is Sara"*. Facts you tell it are given to the AI with every question, survive restarts, and are listed in Settings, where you can delete each one.
 - **24/7 wake-word listening**: continuous mic listener that activates on "TMOS" or "Hey TMOS". It ignores T.M.O.S's own voice, but "stop" still cuts it off mid-sentence.
 - **Animated orb, four styles**: Nebula (particle sphere), Plasma (fluid orb), Pulse (sound-wave ring) and Reactor (HUD rings). Click the orb to switch. It reacts to the real speech and turns green while listening and orange while thinking.
 - **Streaming responses** with markdown, code blocks with copy buttons, and chips showing which actions the AI took.
 - **Voice output**: edge-tts online (7 voices, automatic Arabic voice for Arabic text), pyttsx3 offline fallback, optional VoxCPM2. Code blocks and links aren't read aloud.
 - **Speech input**: Google (free) or Groq Whisper (more accurate).
-- **Productivity**: one-time or daily reminders, countdown timers with alarms, notes, weather, calculator.
+- **Productivity**: one-time or daily reminders, countdown timers with alarms, notes, weather with a 7-day forecast, world clock, calculator.
+- **Music & volume**: play/pause, next/previous track and the system volume, for whatever is playing (Spotify, YouTube, VLC…).
 - **Everywhere**: global hotkey (Ctrl+Shift+Space) to summon it, start with Windows, lives in the tray.
 
 ---
@@ -85,8 +89,12 @@ These built-in commands run instantly without the AI. Everything else goes to th
 |---|---|
 | `open spotify` / `open github.com` | Launch any installed app (found through the Start Menu) or website |
 | `search X` / `youtube X` | Google / YouTube search |
-| `weather` / `weather in Riyadh` | Current weather, spoken |
-| `what time is it` | Time and date |
+| `weather` / `weather in Riyadh` / `weather tomorrow` / `forecast` / `will it rain` | Current weather or the forecast, for your location or any city |
+| `what time is it` / `time in Tokyo` | Time and date, here or anywhere |
+| `where am I` | Your location and where it came from |
+| `pharmacy near me` / `nearest gas station` / `directions to the airport` | Places and directions in Google Maps, around you |
+| `pause` / `next song` / `previous track` / `volume up` / `volume 30` / `mute the sound` | Music and volume |
+| `remember that …` / `what do you remember about me` / `forget …` | Long-term memory (`remember to …` saves a note) |
 | `timer 10 minutes` / `timer 25 min called focus` / `cancel timer` | Countdown timers with an alarm |
 | `remind me at 5pm to call mom` / `remind me in 20 minutes to stretch` | One-time reminder (add `every day` to repeat) |
 | `note buy milk` / `notes` | Save / list notes |
@@ -127,17 +135,21 @@ tmos/
 ├── modules/
 │   ├── ai.py            # Groq + Gemini + Ollama: streaming, tool calling, live model lists
 │   ├── actions.py       # The tools the AI may call (JSON schemas + dispatcher)
+│   ├── location.py      # Where you are: Windows location → IP → manual; world clock
+│   ├── web.py           # Web search (ddgs, Wikipedia fallback) + reading a page
+│   ├── memory.py        # Facts the AI remembers about you
+│   ├── media.py         # Play/pause, tracks, volume (media keys)
 │   ├── config.py        # Persistent JSON config at ~/.tmos/config.json
 │   ├── history.py       # Chat transcript + AI memory across restarts
 │   ├── tts.py           # VoxCPM2 → edge-tts → pyttsx3, interruptible
 │   ├── stt.py           # Google or Groq Whisper speech recognition
 │   ├── reminders.py     # APScheduler: one-time and daily reminders
 │   ├── tools.py         # Timers, calc, clipboard, screenshots, power
-│   ├── weather.py       # Open-Meteo / wttr.in
+│   ├── weather.py       # Open-Meteo current weather + 7-day forecast
 │   ├── hotkey.py        # Global hotkey (Win32 RegisterHotKey)
 │   ├── autostart.py     # Start with Windows
 │   └── notes.py, files.py, system_info.py, apps.py
-├── tests/               # pytest: commands, reminders, AI streaming + tool loop
+├── tests/               # pytest: commands, reminders, AI streaming + tool loop, location, web, memory, media
 └── ui/
     ├── index.html       # Single-file UI: CSS + JS + canvas orb (4 styles)
     └── qwebchannel.js   # Qt WebChannel client
@@ -165,6 +177,8 @@ Config lives at `~/.tmos/config.json`, is created automatically and is edited fr
   "gemini_model":   "gemini-flash-latest",
   "ollama_model":   "qwen2.5",
   "ai_tools":       true,
+  "location_mode":  "auto",
+  "location_place": "",
   "wake_word":      "tmos",
   "always_listen":  true,
   "stt_engine":     "auto",
@@ -185,7 +199,9 @@ Config lives at `~/.tmos/config.json`, is created automatically and is edited fr
 
 - While 24/7 listening is on, everything the mic picks up is sent for recognition: to Google's free endpoint, or to Groq if you choose Groq Whisper in Settings. Turn 24/7 listening off and use the mic button (Ctrl+M) to send audio only on demand.
 - AI prompts go to whichever backend is active. Ollama is the only fully-offline option.
-- All notes, reminders, and config are stored locally under `~/.tmos/`.
+- **Location**: in *Automatic* mode T.M.O.S asks Windows for your position (if you allowed that in Windows' privacy settings) and turns it into a place name with OpenStreetMap; otherwise it looks up your IP address with ipwho.is (or ipinfo.io / geojs.io). The place name goes to the AI with every question. Choose *A place I choose* to share only a city you type, or *Off* to share and look up nothing.
+- **Web search**: when the AI searches, the query goes to public search engines through the `ddgs` package (or to Wikipedia). Pages it reads are fetched from this PC; it refuses addresses on your local network.
+- All notes, reminders, remembered facts and config are stored locally under `~/.tmos/`.
 
 ---
 
@@ -207,6 +223,8 @@ Adding a fourth backend is a self-contained task:
 3. Add a button + key field to `ui/index.html`
 
 A new built-in command is one decorated function in `commands.py`. A new AI tool is one schema plus one handler in `modules/actions.py`.
+
+Free Groq keys allow about 8,000 tokens a minute, and every request carries the tool list, so keep tool descriptions short. When Groq asks to wait a few seconds, T.M.O.S waits and retries instead of failing.
 
 Open a pull request.
 

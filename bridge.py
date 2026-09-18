@@ -136,7 +136,7 @@ class Bridge(QObject):
     @pyqtSlot(str)
     def save_settings(self, payload: str):
         """Apply everything from the Settings dialog in one go."""
-        from modules import ai, autostart, config, stt, tts
+        from modules import ai, autostart, config, location, stt, tts
         try:
             s = json.loads(payload)
         except json.JSONDecodeError:
@@ -150,6 +150,7 @@ class Bridge(QObject):
             keys_changed = True
 
         old_listening = (config.get('stt_engine'), config.get('mic_device') or '')
+        old_location = (location.mode(), config.get('location_place') or '')
         config.update({
             'wake_word':  (s.get('wake_word') or 'tmos').strip().lower(),
             'tts_voice':  s.get('tts_voice') or config.get('tts_voice'),
@@ -157,7 +158,11 @@ class Bridge(QObject):
             'mic_device': (s.get('mic_device') or '').strip(),
             'ai_tools':   bool(s.get('ai_tools', True)),
             'orb_style':  s.get('orb_style') if s.get('orb_style') in ORB_STYLES else 'nebula',
+            'location_mode':  s.get('location_mode') if s.get('location_mode') in location.MODES else 'auto',
+            'location_place': ' '.join((s.get('location_place') or '').split())[:100],
         })
+        if (location.mode(), config.get('location_place')) != old_location:
+            self._win.refresh_location(force=True)
         if (config.get('stt_engine'), config.get('mic_device')) != old_listening or keys_changed:
             self._win.restart_listeners()     # new mic / engine / key → fresh listener
 
@@ -203,6 +208,20 @@ class Bridge(QObject):
         self._win._set_always_listen(enabled)
         self._push_config()
 
+    @pyqtSlot(str)
+    def forget_fact(self, fid: str):
+        from modules import memory
+        memory.remove(fid)
+        self._push_config()
+
+    @pyqtSlot()
+    def open_location_settings(self):
+        import os
+        try:
+            os.startfile('ms-settings:privacy-location')
+        except OSError as e:
+            self.log_pushed.emit(f'Could not open Windows settings: {e}', 'err')
+
     @pyqtSlot()
     def clear_ai_history(self):
         from modules import ai
@@ -246,8 +265,10 @@ class Bridge(QObject):
         self.model_pushed.emit(ai.get_model())
 
     def _push_config(self):
-        from modules import autostart, config, hotkey, mic, tts
+        from modules import autostart, config, hotkey, location, memory, mic, tts
         c = config.get_all()
+        c['location_status'] = location.status()
+        c['memory'] = memory.get_all()
         c['mics'] = [m['name'] for m in mic.list_inputs()]
         c['mic_active'] = mic.resolve()[1]
         from modules import stt

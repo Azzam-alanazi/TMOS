@@ -114,7 +114,10 @@ def _help(ctx, m):
     return Reply(
         '**Try saying or typing:**\n'
         '• `open spotify` · `search black holes` · `youtube lofi` · `browse github.com`\n'
-        '• `weather in Riyadh` · `stats` · `what time is it`\n'
+        '• `weather in Riyadh` · `weather tomorrow` · `forecast` · `stats` · `what time is it`\n'
+        '• `where am I` · `time in Tokyo` · `pharmacy near me` · `directions to the airport`\n'
+        '• `pause` · `next song` · `volume up` · `volume 30` · `mute the sound`\n'
+        '• `remember that my sister is Sara` · `what do you remember about me` · `forget …`\n'
         '• `timer 10 minutes` · `timer 25 min called focus` · `cancel timer`\n'
         '• `remind me at 5pm to call mom` · `remind me in 20 minutes to stretch` '
         '· add `every day` to repeat\n'
@@ -122,7 +125,8 @@ def _help(ctx, m):
         '• `calc 2^10` · `use groq / gemini / ollama` · `model list` · `model 120b`\n'
         '• `clear` (chat) · `clear memory` (AI) · `lock` · `sleep` · `shutdown`\n'
         '• `stop` or **Esc** — stop talking · `mute` / `unmute` — voice off/on\n\n'
-        'Anything else goes to the AI, which can also combine these: '
+        'Anything else goes to the AI, which can search the web and combine these: '
+        '*"what\'s the latest news on the Riyadh Metro?"* · '
         '*"open Spotify and remind me at 5 to stretch"*.',
         speak='Here are some things you can ask me.')
 
@@ -307,6 +311,42 @@ def _list_reminders(ctx, m):
     return Reply('**Reminders:**\n' + '\n'.join(lines), speak=f'You have {len(items)} reminders.')
 
 
+# ── Places (maps) ────────────────────────────────────────────────────────────
+
+def _map(ctx, query: str, directions: bool = False):
+    from modules import actions
+    query = query.strip(' ?.')
+    if not query:
+        return False
+    ctx.run_async(lambda: actions.run('open_map', {'query': query, 'directions': directions}),
+                  lambda r: ctx.reply(Reply(
+                      (f'🗺 Directions to **{query}** in Google Maps.' if directions
+                       else f'🗺 Showing **{query}** near you in Google Maps.')
+                      if r.get('ok') else r.get('message') or r.get('error', 'Could not open the map.'),
+                      speak='Opening the map.' if r.get('ok') else None,
+                      level='ok' if r.get('ok') else 'err')))
+
+
+@command(r"(?:find|show(?:\s+me)?|search(?:\s+for)?|look\s+for|where\s+(?:is|are|can\s+i\s+find))"
+         r"(?:\s+(?:a|an|the|some))?\s+(.+?)\s+(?:near\s+me|nearby|around\s+(?:me|here))",
+         r"where(?:'s|\s+is|\s+are)\s+the\s+(?:nearest|closest)\s+(.+)",
+         r"(?:the\s+)?(?:nearest|closest)\s+(.+)",
+         r"(.+?)\s+near\s+me")
+def _nearby(ctx, m):
+    query = m.group(1)
+    # "is there a pharmacy near me?" or "weather near me" are better answered by the AI
+    if re.match(r"(?:what|how|who|why|when|is|are|do|does|can|could)\b", query, re.IGNORECASE) \
+            or 'weather' in query.lower():
+        return False
+    return _map(ctx, query)
+
+
+@command(r"(?:give\s+me\s+)?(?:directions|navigate|take\s+me|route)\s+to\s+(.+)",
+         r"how\s+(?:do|can)\s+i\s+get\s+to\s+(.+)")
+def _directions(ctx, m):
+    return _map(ctx, m.group(1), directions=True)
+
+
 # ── Web ──────────────────────────────────────────────────────────────────────
 
 def _open_url(url: str, reply: str) -> Reply:
@@ -338,6 +378,61 @@ def _browse(ctx, m):
     return _open_url(url, f'Opening {url}...')
 
 
+# ── Media & volume ───────────────────────────────────────────────────────────
+
+def _media(action: str, **kw) -> Reply:
+    from modules import media
+    r = media.control(action, **kw)
+    # Silent on success: talking over the music is the last thing you want.
+    return Reply(r['message'], speak='' if r['success'] else None,
+                 level='ok' if r['success'] else 'err')
+
+
+@command(r"(?:pause|resume|unpause|play)(?:\s+(?:the|my))?(?:\s+(?:music|song|track|video|playback|media|spotify))?",
+         r"stop\s+(?:the\s+|my\s+)?(?:music|song|video|playback)")
+def _play_pause(ctx, m):
+    return _media('play_pause')
+
+
+@command(r"(?:next|skip)(?:\s+(?:the|this))?(?:\s+(?:song|track|video|one))?",
+         r"play\s+(?:the\s+)?next\s+(?:song|track|video|one)")
+def _next_track(ctx, m):
+    return _media('next')
+
+
+@command(r"(?:previous|prev|last|go\s+back(?:\s+to\s+the)?)(?:\s+(?:song|track|video|one))",
+         r"previous", r"play\s+(?:the\s+)?(?:previous|last)\s+(?:song|track|video|one)")
+def _previous_track(ctx, m):
+    return _media('previous')
+
+
+@command(r"(?:set\s+|change\s+)?(?:the\s+)?volume\s+(?:to\s+|at\s+)?(\d{1,3})\s*(?:%|percent)?")
+def _set_volume(ctx, m):
+    level = int(m.group(1))
+    if level > 100:
+        return False
+    return _media('set_volume', level=level)
+
+
+@command(r"(?:turn\s+)?(?:the\s+)?(?:volume|sound)\s+(up|down)(?:\s+(?:by\s+)?(\d{1,3})\s*(?:%|percent)?)?",
+         r"turn\s+(?:it|the\s+(?:volume|sound|music))\s+(up|down)()",
+         r"(louder|quieter|softer)()")
+def _volume_step(ctx, m):
+    up = m.group(1).lower() in ('up', 'louder')
+    step = int(m.group(2)) if m.group(2) else 10
+    return _media('volume_up' if up else 'volume_down', step=step)
+
+
+@command(r"mute\s+(?:the\s+)?(?:sound|audio|volume|pc|computer|speakers|music|everything)")
+def _mute_sound(ctx, m):
+    return _media('mute')
+
+
+@command(r"unmute\s+(?:the\s+)?(?:sound|audio|volume|pc|computer|speakers|music|everything)")
+def _unmute_sound(ctx, m):
+    return _media('unmute')
+
+
 # ── Apps ─────────────────────────────────────────────────────────────────────
 
 @command(r'(?:open|launch)\s+(.+)')
@@ -360,16 +455,62 @@ def _time(ctx, m):
                  speak=f"It's {now:%H:%M}, {now:%A %d %B}.")
 
 
+@command(r"(?:what(?:'s| is) the |what )?(?:local |current )?time(?: is it)?(?: right now| now)?\s+(?:in|at)\s+(.+?)(?: right now| now)?")
+def _time_in(ctx, m):
+    place = m.group(1).strip(' ?.')
+    if re.fullmatch(r"(?:the |this )?(?:moment|minute|present)|home|here", place, re.IGNORECASE):
+        return _time(ctx, m)
+    if not re.fullmatch(r"[\w .,'-]{1,60}", place):
+        return False
+    from modules import location
+
+    def done(r):
+        if not r.get('success'):
+            return ctx.reply(Reply(r.get('message', 'Could not get the time there.'), level='warn'))
+        ctx.reply(Reply(f"In **{r['place']}** it's **{r['time']}** on {r['date']} ({r['difference']}).",
+                        speak=f"In {r['place']} it's {r['time']}, {r['difference']}."))
+    ctx.run_async(lambda: location.local_time(place), done)
+
+
+@command(r"where am i|where are we|(?:what(?:'s| is) )?my (?:current )?location|locate me|"
+         r"find my location|what city am i in")
+def _where(ctx, m):
+    from modules import location
+
+    def done(loc):
+        ctx.refresh('config')          # Settings shows the location too
+        ctx.reply(Reply(location.describe(loc),
+                        speak=f"You're in {location.label(loc)}." if loc.get('success') else None,
+                        level='ok' if loc.get('success') else 'warn'))
+    ctx.log('Finding your location...', 'sys')
+    ctx.run_async(lambda: location.get(refresh=True), done)
+
+
+_WHEN = re.compile(r"\b(?:for\s+)?(?:today|tonight|now|tomorrow|this\s+week|the\s+week|next\s+week|"
+                   r"(?:the\s+)?(?:next|coming)\s+(?:few\s+)?days|(?:the\s+)?forecast)\b", re.IGNORECASE)
+_HERE = re.compile(r"\b(?:near\s+me|around\s+(?:me|here)|nearby|here|outside|where\s+i\s+am)\b", re.IGNORECASE)
+
+
 @command(r"(?:the\s+)?weather(?:\s+forecast)?(?:\s+(?:in|for|at))?(?:\s+(.+?))?(?:\s+today|\s+now)?",
-         r"(?:what(?:'s| is)|how(?:'s| is)) the weather(?: like)?(?:\s+(?:in|for|at))?(?:\s+(.+?))?(?:\s+today|\s+now)?")
+         r"(?:what(?:'s| is)|how(?:'s| is)) the weather(?: like)?(?: going to be(?: like)?)?(?:\s+(?:in|for|at))?(?:\s+(.+?))?(?:\s+today|\s+now)?",
+         r"(?:the\s+)?(?:weather\s+)?forecast(?:\s+(?:in|for|at))?(?:\s+(.+?))?",
+         r"(?:will|is)\s+it\s+(?:going\s+to\s+)?(?:rain|snow)(?:\s+(.+?))?")
 def _weather(ctx, m):
-    city = (m.group(1) or '').strip()
+    words = m.group(0).lower()
+    day, days = None, 1
+    if 'tomorrow' in words:
+        day, days = 1, 2
+    elif re.search(r'week|forecast|days', words):
+        days = 7
+    city = _HERE.sub(' ', _WHEN.sub(' ', m.group(1) or ''))
+    city = re.sub(r'^\s*(?:in|for|at)\s+|\s+(?:in|for|at)\s*$', '', ' '.join(city.split())).strip(' ,?')
     if city and not re.fullmatch(r"[\w .,'-]{1,60}", city):
         return False
     from modules import weather
     ctx.log(f'Fetching weather{" for " + city if city else ""}...', 'sys')
-    ctx.run_async(lambda: weather.get_weather(city),
-                  lambda w: ctx.reply(Reply(weather.describe(w), level='ok' if w.get('success') else 'warn')))
+    ctx.run_async(lambda: weather.get_weather(city, days),
+                  lambda w: ctx.reply(Reply(weather.describe(w, day),
+                                            level='ok' if w.get('success') else 'warn')))
 
 
 @command(r'stats|system stats|system status|status')
@@ -458,7 +599,7 @@ def _list_notes(ctx, m):
 
 @command(r'(?:add\s+)?note(?::|\s)\s*(.+)',
          r'(?:take|make)\s+a\s+note(?:\s+that)?\s*:?\s*(.+)',
-         r'remember(?:\s+that)?\s+(.+)')
+         r'remember\s+to\s+(.+)')
 def _note(ctx, m):
     from modules import notes
     text = m.group(1).strip()
@@ -467,6 +608,44 @@ def _note(ctx, m):
     if not r['success']:
         return Reply(r['message'], level='warn')
     return Reply(f'📝 Note saved: {text[:80]}', speak='Note saved.')
+
+
+# ── Long-term memory ─────────────────────────────────────────────────────────
+
+@command(r'remember(?:\s+that)?\s+(.+)')
+def _remember(ctx, m):
+    from modules import memory
+    r = memory.add(m.group(1))
+    ctx.refresh('config')
+    if not r['success']:
+        return Reply(r['message'], level='warn')
+    return Reply(f"🧠 I'll remember that: {r['text']}", speak="Got it, I'll remember that.")
+
+
+@command(r"what do you (?:remember|know) about me|what have you remembered|"
+         r"(?:show |list )?(?:my |your )?memor(?:y|ies)|what(?:'s| is) in your memory")
+def _memories(ctx, m):
+    from modules import memory
+    facts = memory.get_all()
+    if not facts:
+        return Reply('I haven\'t been asked to remember anything yet. Try `remember that my sister is Sara`.')
+    lines = '\n'.join(f"• {f['text']}" for f in facts)
+    return Reply(f'**What I remember about you:**\n{lines}\n\nSay `forget …` or delete them in ⚙ Settings.',
+                 speak=f'I remember {len(facts)} thing{"s" if len(facts) != 1 else ""} about you.')
+
+
+@command(r'forget(?:\s+that|\s+about)?\s+(.+)')
+def _forget(ctx, m):
+    from modules import memory
+    query = m.group(1).strip(' .')
+    if re.fullmatch(r'it|this|that|all|everything', query, re.IGNORECASE):
+        return False
+    r = memory.forget(query)
+    ctx.refresh('config')
+    if not r['success']:
+        return Reply(r['message'], level='warn')
+    gone = '\n'.join(f'• {t}' for t in r['forgotten'])
+    return Reply(f'🧠 Forgotten:\n{gone}', speak='Done, I forgot that.')
 
 
 # ── Power ────────────────────────────────────────────────────────────────────

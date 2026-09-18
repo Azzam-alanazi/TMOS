@@ -715,6 +715,7 @@ class TmosWindow(QMainWindow):
         b._push_timers()
         b.history_pushed.emit(json.dumps(history.get_chat(60)))
         self.refresh_models()
+        self.refresh_location()
         self._poll_stats()
         if not ai.has_api_key():
             name = ai.BACKEND_NAMES[ai.get_backend()]
@@ -738,7 +739,7 @@ class TmosWindow(QMainWindow):
 
     def refresh(self, *what: str):
         pushers = {'reminders': self._bridge._push_reminders, 'notes': self._bridge._push_notes,
-                   'timers': self._bridge._push_timers}
+                   'timers': self._bridge._push_timers, 'config': self._bridge._push_config}
         for w in what:
             pushers[w]()
 
@@ -746,6 +747,12 @@ class TmosWindow(QMainWindow):
         history.clear_chat()
         self._bridge.chat_cleared.emit()
         self.log('Chat cleared', 'sys')
+
+    def refresh_location(self, force: bool = False):
+        """Look the location up in the background (so the AI knows it), then show it in Settings."""
+        from modules import location
+        if location.mode() != 'off':
+            self.run_async(lambda: location.get(refresh=force), lambda _: self._bridge._push_config())
 
     def refresh_models(self, force: bool = False):
         from modules import ai
@@ -923,7 +930,8 @@ class TmosWindow(QMainWindow):
         info = json.loads(payload)
         self.log(f"🔧 {info['label']}{': ' + info['detail'] if info['detail'] else ''}",
                  'ok' if info['ok'] else 'err')
-        refresh = {'set_reminder': 'reminders', 'add_note': 'notes', 'start_timer': 'timers'}
+        refresh = {'set_reminder': 'reminders', 'add_note': 'notes', 'start_timer': 'timers',
+                   'remember_fact': 'config', 'forget_fact': 'config', 'get_location': 'config'}
         if info['name'] in refresh:
             self.refresh(refresh[info['name']])
 

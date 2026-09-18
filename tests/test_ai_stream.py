@@ -8,8 +8,9 @@ from modules import actions, ai, config
 
 
 class FakeResponse:
-    def __init__(self, lines=(), status=200, body=None):
+    def __init__(self, lines=(), status=200, body=None, headers=None):
         self.status_code = status
+        self.headers = headers or {}
         self._lines = [l if isinstance(l, bytes) else l.encode() for l in lines]
         self._body = body
         self.text = json.dumps(body) if body is not None else ''
@@ -90,6 +91,37 @@ def test_groq_bad_key_is_explained(env):
     queue.append(FakeResponse(status=401, body={'error': {'message': 'Invalid API Key'}}))
     assert 'rejected the API key' in run('hi')
     assert ai._history == []
+
+
+def test_groq_waits_out_a_short_rate_limit(env, monkeypatch):
+    queue, _, sent = env
+    config.set_value('ai_backend', 'groq')
+    waited = []
+    monkeypatch.setattr(ai, '_wait', lambda secs, stop: waited.append(secs) or True)
+    queue += [FakeResponse(status=429, body={'error': {'message': 'Rate limit reached'}},
+                           headers={'retry-after': '7'}),
+              FakeResponse([sse({'choices': [{'delta': {'content': 'Hi'}}]})])]
+    assert run('hello') == 'Hi'
+    assert waited == [7.0] and len(sent) == 2
+
+
+def test_citation_marks_are_dropped_even_when_split(env):
+    queue, _, _ = env
+    config.set_value('ai_backend', 'groq')
+    long_bracket = '【not a citation, far too long to be one of those marks】'
+    queue.append(FakeResponse([sse({'choices': [{'delta': {'content': c}}]}) for c in
+                               ['Python 3.14 came out in October 2025', '【2†L1', '3-L16】.', ' ' + long_bracket]]))
+    expected = f'Python 3.14 came out in October 2025. {long_bracket}'
+    assert run('python?') == expected
+    assert ai._history[-1]['content'] == expected
+
+
+def test_groq_long_rate_limit_is_explained(env):
+    queue, _, _ = env
+    config.set_value('ai_backend', 'groq')
+    queue.append(FakeResponse(status=429, body={'error': {'message': 'Rate limit reached'}},
+                              headers={'retry-after': '300'}))
+    assert 'rate limit reached' in run('hello')
 
 
 def test_gemini_function_call_keeps_thought_signature(env):
