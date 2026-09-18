@@ -26,7 +26,8 @@ A futuristic desktop AI assistant with always-on wake-word listening, an animate
 
 ## Screenshots
 
-<img width="1279" height="792" alt="image" src="https://github.com/user-attachments/assets/5bb87b02-5794-464f-8e94-9afa5d3aa54c" />
+<img width="1916" height="1031" alt="image" src="https://github.com/user-attachments/assets/1507d477-a736-4124-98cd-4c9670f540ea" />
+
 
 ---
 
