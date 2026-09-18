@@ -156,5 +156,13 @@ def test_think_filter_handles_split_tags():
 def test_set_model_accepts_unique_partial_name(monkeypatch):
     monkeypatch.setattr(config, '_config', dict(config._config, ai_backend='groq'))
     monkeypatch.setattr(config, '_save', lambda: None)
-    assert ai.set_model('70b')['model'] == 'llama-3.3-70b-versatile'
-    assert not ai.set_model('llama')['success']            # ambiguous
+    assert ai.set_model('120b')['model'] == 'openai/gpt-oss-120b'
+    assert not ai.set_model('gpt-oss')['success']          # ambiguous: 120b and 20b
+
+
+def test_retired_model_is_replaced(monkeypatch):
+    monkeypatch.setattr(config, '_config', dict(config._config, groq_model='llama-3.3-70b-versatile'))
+    monkeypatch.setattr(config, '_save', lambda: None)
+    monkeypatch.setitem(ai._model_cache, 'groq', (0, [{'id': 'openai/gpt-oss-120b', 'name': 'x', 'desc': ''}]))
+    assert ai.heal_model('groq') == 'openai/gpt-oss-120b'
+    assert ai.heal_model('groq') is None                   # already fine

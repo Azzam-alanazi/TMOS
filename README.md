@@ -71,7 +71,7 @@ Now say **"TMOS, hello"** and it replies.
 
 | Backend | Cost | Speed | Quality | Offline | Best For |
 |---|---|---|---|---|---|
-| **Groq** (default) | Free | ~300 tok/s | Llama 3.3 70B | No | Everyday use |
+| **Groq** (default) | Free | Very fast | GPT-OSS 120B | No | Everyday use |
 | **Gemini** | Free tier | Fast | Gemini 2.5 Flash | No | Google ecosystem |
 | **Ollama** | Free | Depends on GPU | Qwen 2.5, Llama, Mistral | Yes | Privacy / no internet |
 
@@ -94,7 +94,7 @@ These built-in commands run instantly without the AI. Everything else goes to th
 | `calc 2^10` / `what is 12 * 12` | Calculator |
 | `copy <text>` / `clipboard` / `screenshot` | Clipboard and screenshots |
 | `use groq` / `use gemini` / `use ollama` | Switch AI backend |
-| `model list` / `model 70b` | List models / switch by a unique part of the name |
+| `model list` / `model 120b` | List models / switch by a unique part of the name |
 | `stop` | Stop talking and cancel the current answer |
 | `mute` / `unmute` | Turn spoken replies off / on |
 | `clear` / `clear memory` | Clear the chat / reset the AI's memory |
@@ -160,14 +160,14 @@ Config lives at `~/.tmos/config.json`, is created automatically and is edited fr
 {
   "ai_backend":     "groq",
   "groq_api_key":   "",
-  "groq_model":     "llama-3.3-70b-versatile",
+  "groq_model":     "openai/gpt-oss-120b",
   "gemini_api_key": "",
-  "gemini_model":   "gemini-2.5-flash",
+  "gemini_model":   "gemini-flash-latest",
   "ollama_model":   "qwen2.5",
   "ai_tools":       true,
   "wake_word":      "tmos",
   "always_listen":  true,
-  "stt_engine":     "google",
+  "stt_engine":     "auto",
   "voice_enabled":  true,
   "tts_voice":      "en-US-ChristopherNeural",
   "hotkey":         "ctrl+shift+space",

@@ -32,12 +32,10 @@ MAX_TOOL_ROUNDS      = 5       # model → tools → model … at most this many
 
 # Suggested models, shown first and used when the live list can't be fetched.
 GROQ_MODELS = {
-    'llama-3.3-70b-versatile': {'name': 'Llama 3.3 70B',  'desc': 'Best all-rounder'},
-    'openai/gpt-oss-120b':     {'name': 'GPT-OSS 120B',   'desc': 'Strong at using tools'},
-    'openai/gpt-oss-20b':      {'name': 'GPT-OSS 20B',    'desc': 'Fast, good tool use'},
-    'llama-3.1-8b-instant':    {'name': 'Llama 3.1 8B',   'desc': 'Highest free volume'},
-    'qwen/qwen3-32b':          {'name': 'Qwen 3 32B',     'desc': 'Alibaba reasoning'},
-    'meta-llama/llama-4-scout-17b-16e-instruct': {'name': 'Llama 4 Scout', 'desc': 'Meta multimodal'},
+    'openai/gpt-oss-120b':     {'name': 'GPT-OSS 120B',   'desc': 'Best all-rounder, strong tool use'},
+    'openai/gpt-oss-20b':      {'name': 'GPT-OSS 20B',    'desc': 'Fastest, good tool use'},
+    'qwen/qwen3.8-27b':        {'name': 'Qwen 3.8 27B',   'desc': 'Alibaba, multilingual'},
+    'llama-3.3-70b-versatile': {'name': 'Llama 3.3 70B',  'desc': 'Retired on newer keys'},
 }
 
 GEMINI_MODELS = {
@@ -201,6 +199,19 @@ def fetch_models(backend: str | None = None, refresh: bool = False) -> tuple[lis
         return _static_list(backend), err
     _model_cache[backend] = (time.time(), models)
     return models, err
+
+
+def heal_model(backend: str) -> str | None:
+    """If the live list is loaded and the selected model isn't in it (retired),
+    switch to the best available one. Returns the new model id, or None."""
+    cached = _model_cache.get(backend)
+    if not cached or not cached[1]:
+        return None
+    ids = [m['id'] for m in cached[1]]
+    if get_model(backend) in ids:
+        return None
+    config.set_value(_MODEL_KEYS[backend], ids[0])
+    return ids[0]
 
 
 def _order(models: list[dict], preferred: dict) -> list[dict]:
@@ -416,6 +427,8 @@ def _groq_stream(messages: list[dict], tools, on_tool, stop) -> Generator[str, N
             body['tool_choice'] = 'auto'
         if re.search(r'qwen3|deepseek', model, re.IGNORECASE):
             body['reasoning_format'] = 'hidden'
+        if 'gpt-oss' in model:
+            body['reasoning_effort'] = 'low'          # quick answers for a voice assistant
 
         with requests.post(f'{GROQ_URL}/chat/completions', headers=headers, json=body,
                            timeout=(10, 60), stream=True) as resp:

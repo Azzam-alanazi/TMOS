@@ -759,6 +759,11 @@ class TmosWindow(QMainWindow):
         backend, models, err = res
         if backend != ai.get_backend():
             return
+        old = ai.get_model(backend)
+        new = ai.heal_model(backend)
+        if new:
+            self.log(f'{old} is no longer offered by {ai.BACKEND_NAMES[backend]} — switched to {new}', 'warn')
+            self._bridge.model_pushed.emit(new)
         self._bridge.models_pushed.emit(json.dumps(
             {'backend': backend, 'current': ai.get_model(), 'models': models}))
         if err:

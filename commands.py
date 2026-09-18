@@ -119,7 +119,7 @@ def _help(ctx, m):
         '• `remind me at 5pm to call mom` · `remind me in 20 minutes to stretch` '
         '· add `every day` to repeat\n'
         '• `note buy milk` · `notes` · `copy [text]` · `clipboard` · `screenshot`\n'
-        '• `calc 2^10` · `use groq / gemini / ollama` · `model list` · `model 70b`\n'
+        '• `calc 2^10` · `use groq / gemini / ollama` · `model list` · `model 120b`\n'
         '• `clear` (chat) · `clear memory` (AI) · `lock` · `sleep` · `shutdown`\n'
         '• `stop` or **Esc** — stop talking · `mute` / `unmute` — voice off/on\n\n'
         'Anything else goes to the AI, which can also combine these: '
@@ -168,7 +168,7 @@ def _model_list(ctx, m):
              f"{'  ◄' if k == current else ''}"
              for k, v in ai.get_available_models().items()]
     return Reply(f'**{ai.BACKEND_NAMES[ai.get_backend()]} models:**\n' + '\n'.join(lines[:25])
-                 + '\n\nSwitch with `model <name>`, e.g. `model 70b`.',
+                 + '\n\nSwitch with `model <name>`, e.g. `model 120b`.',
                  speak='Here are the available models.')
 
 

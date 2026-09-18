@@ -16,7 +16,7 @@ _DEFAULTS: dict[str, Any] = {
     'gemini_api_key':  '',
     'gemini_model':    'gemini-flash-latest',
     'groq_api_key':    '',
-    'groq_model':      'llama-3.3-70b-versatile',
+    'groq_model':      'openai/gpt-oss-120b',
     'ollama_model':    'qwen2.5',
     'ai_tools':        True,            # let the AI open apps, set reminders, etc.
     'wake_word':       'tmos',          # e.g. "tmos" or "hey tmos"
