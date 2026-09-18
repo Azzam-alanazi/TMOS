@@ -1,6 +1,6 @@
 # T.M.O.S — Desktop AI Assistant
 
-A futuristic desktop AI assistant with always-on wake-word listening, an animated "web" orb, and three swappable AI backends (Groq, Gemini, Ollama). Built with PyQt6 + QWebEngine and a pure-SVG animated frontend.
+A futuristic desktop AI assistant with always-on wake-word listening, an animated orb (four styles), and three swappable AI backends (Groq, Gemini, Ollama) that can act on your PC. Built with PyQt6 + QWebEngine.
 
 > Say **"TMOS, what's the weather?"** — no buttons required.
 
