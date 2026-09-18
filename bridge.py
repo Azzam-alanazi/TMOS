@@ -5,6 +5,8 @@ Handles all bidirectional communication between the PyQt backend and the HTML UI
 import json
 from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot
 
+ORB_STYLES = ('nebula', 'plasma', 'pulse', 'reactor')
+
 
 class Bridge(QObject):
     """Bidirectional Python ↔ JavaScript channel via QWebChannel."""
@@ -154,6 +156,7 @@ class Bridge(QObject):
             'stt_engine': s.get('stt_engine') if s.get('stt_engine') in stt.ENGINES else 'auto',
             'mic_device': (s.get('mic_device') or '').strip(),
             'ai_tools':   bool(s.get('ai_tools', True)),
+            'orb_style':  s.get('orb_style') if s.get('orb_style') in ORB_STYLES else 'nebula',
         })
         if (config.get('stt_engine'), config.get('mic_device')) != old_listening or keys_changed:
             self._win.restart_listeners()     # new mic / engine / key → fresh listener
@@ -186,6 +189,12 @@ class Bridge(QObject):
         self._push_config()
         if keys_changed:
             self._win.refresh_models(force=True)
+
+    @pyqtSlot(str)
+    def set_orb_style(self, style: str):
+        from modules import config
+        if style in ORB_STYLES:
+            config.set_value('orb_style', style)
 
     @pyqtSlot(bool)
     def toggle_always_listen(self, enabled: bool):

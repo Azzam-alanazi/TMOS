@@ -25,6 +25,7 @@ _DEFAULTS: dict[str, Any] = {
     'mic_device':      '',              # microphone name; '' = automatic (skips virtual webcam mics)
     'voice_enabled':   True,
     'tts_voice':       'en-US-ChristopherNeural',
+    'orb_style':       'nebula',        # nebula | plasma | pulse | reactor
     'hotkey':          'ctrl+shift+space',
     'start_with_windows': False,
     'server_token':    '',              # generated the first time server.py runs

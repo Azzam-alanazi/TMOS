@@ -11,7 +11,7 @@ A futuristic desktop AI assistant with always-on wake-word listening, an animate
 - **Three AI backends, one toggle**: Groq (fast + free), Google Gemini (online), or Ollama (local & private). Swap at runtime. They share one conversation memory, which survives restarts.
 - **The AI can act on your PC (tool calling)**: *"open Spotify and remind me at 5 to stretch"* just works. The AI can open apps and sites, search, set reminders and timers, save and read notes, check weather and system stats, use the clipboard, take screenshots and lock the PC. It can never delete files or shut down; those stay behind explicit commands.
 - **24/7 wake-word listening**: continuous mic listener that activates on "TMOS" or "Hey TMOS". It ignores T.M.O.S's own voice, but "stop" still cuts it off mid-sentence.
-- **Animated web orb**: SVG spider-web that rotates idle, ripples while T.M.O.S is actually speaking, turns green while listening and orange while thinking.
+- **Animated orb, four styles**: Nebula (particle sphere), Plasma (fluid orb), Pulse (sound-wave ring) and Reactor (HUD rings). Click the orb to switch. It reacts to the real speech and turns green while listening and orange while thinking.
 - **Streaming responses** with markdown, code blocks with copy buttons, and chips showing which actions the AI took.
 - **Voice output**: edge-tts online (7 voices, automatic Arabic voice for Arabic text), pyttsx3 offline fallback, optional VoxCPM2. Code blocks and links aren't read aloud.
 - **Speech input**: Google (free) or Groq Whisper (more accurate).
@@ -139,7 +139,7 @@ tmos/
 │   └── notes.py, files.py, system_info.py, apps.py
 ├── tests/               # pytest: commands, reminders, AI streaming + tool loop
 └── ui/
-    ├── index.html       # Single-file UI: CSS + JS + animated SVG web orb
+    ├── index.html       # Single-file UI: CSS + JS + canvas orb (4 styles)
     └── qwebchannel.js   # Qt WebChannel client
 ```
 
