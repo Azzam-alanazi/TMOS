@@ -4,9 +4,11 @@ Auto-discovers installed apps on Windows.
 """
 
 import os
+import platform
+import re
+import shutil
 import subprocess
 import webbrowser
-import platform
 
 # Full path candidates for apps that aren't in PATH
 _CANDIDATES: dict[str, list[str]] = {
@@ -116,9 +118,34 @@ def _resolve(name: str) -> str | None:
     return None
 
 
+def _start_menu_shortcut(name: str) -> str | None:
+    """Find an installed app's Start Menu shortcut whose name matches."""
+    import glob
+    roots = [
+        os.path.expandvars(r'%AppData%\Microsoft\Windows\Start Menu\Programs'),
+        os.path.expandvars(r'%ProgramData%\Microsoft\Windows\Start Menu\Programs'),
+    ]
+    want = re.sub(r'[^a-z0-9]', '', name.lower())
+    if len(want) < 2:
+        return None
+    best: tuple[int, str] | None = None
+    for root in roots:
+        for lnk in glob.glob(os.path.join(root, '**', '*.lnk'), recursive=True):
+            title = re.sub(r'[^a-z0-9]', '', os.path.splitext(os.path.basename(lnk))[0].lower())
+            if 'uninstall' in title:
+                continue
+            if title == want:
+                return lnk
+            if title.startswith(want) or want in title:
+                score = len(title)          # prefer the shortest (closest) match
+                if best is None or score < best[0]:
+                    best = (score, lnk)
+    return best[1] if best else None
+
+
 def open_app(name: str) -> dict:
     """Try to open an application by name."""
-    key = name.lower().strip()
+    key = re.sub(r'^(the|my)\s+', '', name.lower().strip()).removesuffix(' app').strip()
 
     # Resolve alias
     resolved_key = _ALIASES.get(key, key)
@@ -132,18 +159,39 @@ def open_app(name: str) -> dict:
         except Exception as e:
             return {'success': False, 'message': str(e)}
 
-    # Fall back to shell command
-    cmd = _SHELL_CMDS.get(resolved_key, _SHELL_CMDS.get(key, key))
-    try:
-        if platform.system() == 'Windows':
-            subprocess.Popen(cmd, shell=True)
-        else:
-            subprocess.Popen(cmd.split())
-        return {'success': True, 'message': f'Opening {name}...'}
-    except FileNotFoundError:
-        return {'success': False, 'message': f'App not found: {name}. Try the full path or install it.'}
-    except Exception as e:
-        return {'success': False, 'message': f'Could not open {name}: {e}'}
+    # Known built-in commands (fixed strings, safe for the shell)
+    cmd = _SHELL_CMDS.get(resolved_key)
+    if cmd:
+        try:
+            if platform.system() == 'Windows':
+                subprocess.Popen(cmd, shell=True)
+            else:
+                subprocess.Popen(cmd.split())
+            return {'success': True, 'message': f'Opening {name}...'}
+        except Exception as e:
+            return {'success': False, 'message': f'Could not open {name}: {e}'}
+
+    # Never hand an unknown name to the shell, since text like "x & del ..." would
+    # run as a command. Only plain app names are allowed from here on.
+    if not re.fullmatch(r'[\w .+\-]{1,60}', key):
+        return {'success': False, 'message': f'App not found: {name}.'}
+
+    if platform.system() == 'Windows':
+        lnk = _start_menu_shortcut(resolved_key)
+        target = lnk or shutil.which(resolved_key) or shutil.which(resolved_key.replace(' ', ''))
+        if target:
+            try:
+                os.startfile(target)
+                return {'success': True, 'message': f'Opening {name}...'}
+            except OSError as e:
+                return {'success': False, 'message': f'Could not open {name}: {e}'}
+        return {'success': False, 'message': f'App not found: {name}. Is it installed?'}
+
+    exe = shutil.which(resolved_key)
+    if not exe:
+        return {'success': False, 'message': f'App not found: {name}.'}
+    subprocess.Popen([exe])
+    return {'success': True, 'message': f'Opening {name}...'}
 
 
 def open_browser(url: str) -> dict:

@@ -52,3 +52,6 @@ voxcpm_cache/
 edge_tts_cache/
 *.wav
 *.mp3
+
+# Tests
+.pytest_cache/

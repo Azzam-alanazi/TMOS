@@ -14,14 +14,22 @@ os.makedirs(DATA_DIR, exist_ok=True)
 _DEFAULTS: dict[str, Any] = {
     'ai_backend':      'groq',          # 'groq' | 'gemini' | 'ollama'
     'gemini_api_key':  '',
-    'gemini_model':    'gemini-2.0-flash',
+    'gemini_model':    'gemini-2.5-flash',
     'groq_api_key':    '',
     'groq_model':      'llama-3.3-70b-versatile',
     'ollama_model':    'qwen2.5',
+    'ai_tools':        True,            # let the AI open apps, set reminders, etc.
     'wake_word':       'tmos',          # e.g. "tmos" or "hey tmos"
     'always_listen':   True,            # continuous wake-word listening
+    'stt_engine':      'google',        # 'google' (free) | 'groq' (Whisper, needs Groq key)
     'voice_enabled':   True,
+    'tts_voice':       'en-US-ChristopherNeural',
+    'hotkey':          'ctrl+shift+space',
+    'start_with_windows': False,
+    'server_token':    '',              # generated the first time server.py runs
 }
+
+_SECRET_KEYS = ('gemini_api_key', 'groq_api_key', 'server_token')
 
 
 def _mask(k: str) -> str:
@@ -35,10 +43,13 @@ def _load() -> None:
     _config = dict(_DEFAULTS)
     if os.path.exists(CONFIG_FILE):
         try:
-            with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+            with open(CONFIG_FILE, 'r', encoding='utf-8-sig') as f:   # tolerate Notepad's BOM
                 _config.update(json.load(f))
         except (json.JSONDecodeError, IOError):
             pass
+    # Google has shut down the Gemini 1.x models.
+    if str(_config.get('gemini_model', '')).startswith('gemini-1.'):
+        _config['gemini_model'] = _DEFAULTS['gemini_model']
 
 
 def _save() -> None:
@@ -62,10 +73,11 @@ def set_value(key: str, value: Any) -> None:
 
 
 def get_all() -> dict:
-    # Don't expose API key in full — return masked version
+    # Don't expose secrets in full — return masked versions plus "is set" flags
     c = dict(_config)
-    c['gemini_api_key'] = _mask(c.get('gemini_api_key', ''))
-    c['groq_api_key']   = _mask(c.get('groq_api_key', ''))
+    for k in _SECRET_KEYS:
+        c[f'has_{k}'] = bool(c.get(k))
+        c[k] = _mask(c.get(k, ''))
     return c
 
 

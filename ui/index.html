@@ -14,16 +14,21 @@
   --cyan:    #00e5ff;
   --dark:    #020b14;
   --panel:   #040f1e;
-  --red:     #ff4444;
+  --panel-2: #071a28;
+  --red:     #ff4d5e;
   --green:   #00ff88;
   --orange:  #ffaa00;
   --purple:  #b388ff;
-  --text:    #b0d8e8;
+  --groq:    #ff7a2e;
+  --text:    #c4e4f0;
   --dim:     #7ab8cc;
+  --faint:   #4f8196;
   --border:  #0d3a52;
+  --border-hi: #1a5a7a;
   --track:   #0d2535;
   --mono:    'Share Tech Mono', 'Consolas', monospace;
   --head:    'Orbitron', 'Consolas', monospace;
+  color-scheme: dark;
 }
 
 html, body {
@@ -50,18 +55,21 @@ body::after {
   inset: 0;
   background: repeating-linear-gradient(
     0deg, transparent, transparent 2px,
-    rgba(0,0,0,.035) 2px, rgba(0,0,0,.035) 4px
+    rgba(0,0,0,.03) 2px, rgba(0,0,0,.03) 4px
   );
   pointer-events: none;
   z-index: 9999;
 }
+
+button { font-family: var(--mono); }
+:focus-visible { outline: 1px solid var(--cyan); outline-offset: 2px; }
 
 /* ── Layout ─────────────────────────────────────────────────────────────── */
 .root { display: flex; flex-direction: column; height: 100vh; }
 
 .content {
   display: grid;
-  grid-template-columns: 1fr 2fr 1fr;
+  grid-template-columns: minmax(240px, 1fr) minmax(420px, 2fr) minmax(280px, 1fr);
   gap: 8px;
   padding: 8px 8px 4px;
   flex: 1;
@@ -75,7 +83,7 @@ body::after {
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 6px;
-  padding: 10px;
+  padding: 10px 12px;
   position: relative;
   overflow: hidden;
 }
@@ -85,6 +93,7 @@ body::after {
   position: absolute;
   width: 10px;
   height: 10px;
+  pointer-events: none;
 }
 .card::before {
   top: -1px; left: -1px;
@@ -99,14 +108,14 @@ body::after {
 
 .card-title {
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 10.5px;
   font-weight: bold;
   letter-spacing: 2.5px;
   color: var(--cyan);
   text-transform: uppercase;
   border-bottom: 1px solid var(--border);
-  padding-bottom: 6px;
-  margin-bottom: 8px;
+  padding-bottom: 7px;
+  margin-bottom: 9px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -115,8 +124,24 @@ body::after {
 
 .fill { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 
+.mini-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--dim);
+  font-size: 9.5px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.mini-btn:hover { color: var(--cyan); border-color: var(--cyan); }
+
+.list-empty { font-size: 11px; color: var(--faint); padding: 10px 4px; line-height: 1.5; }
+
 /* ── Tabs ────────────────────────────────────────────────────────────────── */
-.tab-bar { display: flex; gap: 2px; margin-bottom: 8px; }
+.tab-bar { display: flex; gap: 2px; margin-bottom: 9px; }
 
 .tab-btn {
   flex: 1;
@@ -124,11 +149,10 @@ body::after {
   border: 1px solid var(--border);
   border-radius: 4px 4px 0 0;
   color: var(--dim);
-  font-family: var(--mono);
-  font-size: 8px;
-  letter-spacing: 1.5px;
+  font-size: 9.5px;
+  letter-spacing: 1.2px;
   text-transform: uppercase;
-  padding: 5px 4px;
+  padding: 6px 4px;
   cursor: pointer;
   transition: all .15s;
 }
@@ -139,20 +163,31 @@ body::after {
   border-color: var(--cyan);
   border-bottom-color: var(--panel);
 }
+.tab-count {
+  display: inline-block;
+  min-width: 15px;
+  margin-left: 3px;
+  padding: 0 4px;
+  border-radius: 7px;
+  background: rgba(0,229,255,.18);
+  color: var(--cyan);
+  font-size: 9px;
+}
+.tab-count:empty { display: none; }
 
 .tab-content { display: none; flex: 1; min-height: 0; overflow: hidden; flex-direction: column; }
 .tab-content.active { display: flex; }
 
 /* ── STATS ───────────────────────────────────────────────────────────────── */
-.stat-bar { margin-bottom: 10px; }
+.stat-bar { margin-bottom: 11px; }
 
 .stat-label {
   display: flex;
   justify-content: space-between;
-  font-size: 9px;
+  font-size: 10.5px;
   color: var(--dim);
   letter-spacing: 1px;
-  margin-bottom: 3px;
+  margin-bottom: 4px;
 }
 .stat-label b { color: var(--cyan); font-weight: normal; }
 
@@ -185,20 +220,22 @@ body::after {
 .stat-fill.high { background: linear-gradient(90deg, #550000, var(--red)); }
 .stat-fill.high::after { background: rgba(255,68,68,.9); box-shadow: 0 0 8px rgba(255,68,68,.7); }
 
-.info-row, .battery-row { font-size: 9px; color: var(--dim); margin-top: 5px; letter-spacing: .5px; }
+.info-row, .battery-row { font-size: 10.5px; color: var(--dim); margin-top: 6px; letter-spacing: .5px; }
 .battery-row { display: flex; align-items: center; gap: 6px; }
 .battery-icon { font-size: 12px; }
 
 /* ── LOG ─────────────────────────────────────────────────────────────────── */
-.log-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 3px; }
+.log-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
 
 .log-entry {
-  font-size: 9px;
+  font-size: 10.5px;
   line-height: 1.5;
   padding: 2px 0;
   border-bottom: 1px solid rgba(13,58,82,.3);
   animation: fadeIn .25s ease;
+  word-break: break-word;
 }
+.log-ts { color: var(--faint); }
 
 .tag-sys  { color: var(--cyan); }
 .tag-ok   { color: var(--green); }
@@ -440,75 +477,199 @@ body::after {
 }
 .model-indicator .backend-tag.gemini { background: rgba(179,136,255,.15); color: var(--purple); }
 
+/* Waveform only moves while T.M.O.S is speaking or listening */
+.orb-card:not(.live) .wave-bar { animation: none; transform: scaleY(.12); opacity: .25; }
+.model-indicator { font-size: 9.5px; }
+
 /* ── CHAT ────────────────────────────────────────────────────────────────── */
-.chat-messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding: 2px; }
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 6px 6px 2px;
+}
 
 .bubble {
-  padding: 8px 10px;
-  border-radius: 6px;
+  max-width: 88%;
+  padding: 8px 12px 10px;
+  border-radius: 8px;
   border: 1px solid;
   animation: bubbleIn .2s ease;
 }
-.bubble.user     { background: #0d2035; border-color: #1a4060; }
-.bubble.ai       { background: #071525; border-color: var(--border); }
-.bubble.thinking { background: #071525; border-color: var(--border); opacity: .65; }
+.bubble.user     { align-self: flex-end; background: #0d2035; border-color: #1a4060; border-bottom-right-radius: 2px; }
+.bubble.ai       { align-self: flex-start; background: #071525; border-color: var(--border); border-bottom-left-radius: 2px; }
+.bubble.notice   { align-self: stretch; max-width: none; background: rgba(0,229,255,.04);
+                   border-color: rgba(0,229,255,.35); border-style: dashed; }
+.bubble.history  { opacity: .72; }
 
 @keyframes bubbleIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
-.bubble-sender {
-  font-size: 9px;
-  font-weight: bold;
-  letter-spacing: 1px;
-  margin-bottom: 3px;
+.bubble-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-size: 9.5px;
+  letter-spacing: 1.2px;
   text-transform: uppercase;
+  min-height: 18px;
 }
-.bubble.user     .bubble-sender { color: var(--cyan);  }
-.bubble.ai       .bubble-sender { color: var(--green); }
-.bubble.thinking .bubble-sender { color: var(--dim);   }
+.bubble-sender { font-weight: bold; }
+.bubble.user   .bubble-sender { color: var(--cyan); }
+.bubble.ai     .bubble-sender { color: var(--green); }
+.bubble.notice .bubble-sender { color: var(--cyan); }
+.bubble-time { color: var(--faint); letter-spacing: .5px; }
+.bubble-actions { margin-left: auto; display: flex; gap: 4px; opacity: 0; transition: opacity .15s; }
+.bubble:hover .bubble-actions { opacity: 1; }
 
-.bubble-text { font-size: 11px; line-height: 1.55; white-space: pre-wrap; word-break: break-word; }
-
+.bubble-text {
+  font-size: 13px;
+  line-height: 1.6;
+  word-break: break-word;
+  user-select: text;
+  cursor: text;
+}
+.bubble.user .bubble-text { white-space: pre-wrap; }
+.bubble-text p { margin: 0 0 7px; }
+.bubble-text p:last-child, .bubble-text ul:last-child, .bubble-text ol:last-child { margin-bottom: 0; }
+.bubble-text ul, .bubble-text ol { margin: 3px 0 7px 18px; }
+.bubble-text li { margin: 2px 0; }
+.bubble-text h3 {
+  font-family: var(--head);
+  font-size: 11.5px;
+  letter-spacing: 1.5px;
+  color: var(--cyan);
+  margin: 8px 0 4px;
+}
 .bubble-text strong { color: var(--cyan); font-weight: bold; }
 .bubble-text em { color: var(--purple); font-style: italic; }
+.bubble-text a { color: var(--cyan); text-decoration: underline dotted; cursor: pointer; }
+.bubble-text blockquote { border-left: 2px solid var(--border-hi); padding-left: 9px; color: var(--dim); margin: 4px 0; }
+.bubble-text hr { border: none; border-top: 1px solid var(--border); margin: 8px 0; }
 .bubble-text code {
   background: rgba(0,229,255,.08);
   color: var(--green);
   padding: 1px 5px;
   border-radius: 3px;
-  font-size: 10px;
+  font-size: 12px;
 }
-.bubble-text pre {
+
+.code-block {
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  margin: 7px 0;
   background: #030d19;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 8px;
-  margin: 6px 0;
-  overflow-x: auto;
-  font-size: 10px;
-  white-space: pre;
+  overflow: hidden;
 }
-.bubble-text pre code { background: none; padding: 0; color: var(--text); }
-
-.thinking-dots::after { content: '▌'; animation: blink 1s step-start infinite; }
-@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
-
-/* ── QUICK ACTIONS ────────────────────────────────────────────────────────── */
-.quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-
-.quick-btn {
-  background: #071a28;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  color: var(--cyan);
-  font-family: var(--mono);
-  font-size: 9px;
-  font-weight: bold;
-  letter-spacing: 1.5px;
+.code-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 6px 3px 10px;
+  background: #06192a;
+  border-bottom: 1px solid var(--border);
+  font-size: 9.5px;
+  color: var(--dim);
+  letter-spacing: 1px;
   text-transform: uppercase;
-  padding: 9px 6px;
+}
+.code-block pre { padding: 9px 11px; overflow-x: auto; font-size: 12px; line-height: 1.5; white-space: pre; margin: 0; }
+.code-block pre code { background: none; padding: 0; color: var(--text); font-size: 12px; }
+
+.cursor { display: inline-block; width: 7px; height: 13px; margin-left: 2px; vertical-align: -2px;
+          background: var(--cyan); animation: blink 1s step-start infinite; }
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+
+/* Tool chips: what the AI actually did */
+.tool-chips { display: flex; flex-wrap: wrap; gap: 5px; margin: 2px 0 7px; }
+.tool-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  padding: 2px 9px;
+  border-radius: 10px;
+  border: 1px solid rgba(0,255,136,.4);
+  color: var(--green);
+  background: rgba(0,255,136,.06);
+  animation: bubbleIn .2s ease;
+}
+.tool-chip.fail { border-color: rgba(255,77,94,.5); color: var(--red); background: rgba(255,77,94,.07); }
+.tool-chip b { font-weight: normal; color: var(--text); opacity: .85; }
+
+/* Thinking indicator */
+.bubble.thinking { opacity: .85; }
+.thinking-dots { display: inline-flex; gap: 4px; vertical-align: middle; }
+.thinking-dots i {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--orange);
+  animation: dot-bounce 1s ease-in-out infinite;
+}
+.thinking-dots i:nth-child(2) { animation-delay: .15s; }
+.thinking-dots i:nth-child(3) { animation-delay: .3s; }
+.thinking-label { color: var(--dim); font-size: 11.5px; margin-left: 6px; letter-spacing: 1px; }
+@keyframes dot-bounce { 0%,100% { transform: translateY(0); opacity: .4; } 50% { transform: translateY(-4px); opacity: 1; } }
+
+.history-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 9.5px;
+  letter-spacing: 2px;
+  color: var(--faint);
+  text-transform: uppercase;
+  margin: 2px 0;
+}
+.history-divider::before, .history-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+.empty-state {
+  margin: auto;
+  text-align: center;
+  color: var(--dim);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  padding: 16px;
+  font-size: 12px;
+}
+.empty-title { font-family: var(--head); letter-spacing: 4px; color: var(--cyan); font-size: 13px; }
+.suggestions { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; max-width: 460px; }
+.suggestion {
+  font-size: 11.5px;
+  color: var(--text);
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 5px 12px;
   cursor: pointer;
   transition: all .15s;
 }
+.suggestion:hover { border-color: var(--cyan); color: var(--cyan); box-shadow: 0 0 10px rgba(0,229,255,.2); }
+
+/* ── QUICK ACTIONS ────────────────────────────────────────────────────────── */
+.quick-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+
+.quick-btn {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--cyan);
+  font-size: 10px;
+  font-weight: bold;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  padding: 8px 4px;
+  cursor: pointer;
+  transition: all .15s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.quick-btn span { font-size: 15px; }
 .quick-btn:hover { background: #0d2d42; border-color: var(--cyan); box-shadow: 0 0 10px rgba(0,229,255,.25); }
 .quick-btn:active { background: var(--cyan); color: var(--dark); }
 
@@ -516,8 +677,8 @@ body::after {
 .backend-toggle {
   display: flex;
   align-items: center;
-  gap: 4px;
-  background: #071a28;
+  gap: 2px;
+  background: var(--panel-2);
   border: 1px solid var(--border);
   border-radius: 4px;
   padding: 2px;
@@ -527,31 +688,20 @@ body::after {
   background: transparent;
   border: none;
   color: var(--dim);
-  font-family: var(--mono);
-  font-size: 9px;
+  font-size: 9.5px;
   font-weight: bold;
   letter-spacing: 1px;
   text-transform: uppercase;
-  padding: 4px 8px;
+  padding: 4px 7px;
   cursor: pointer;
   border-radius: 3px;
   transition: all .15s;
 }
-.backend-btn.active.gemini {
-  background: var(--purple);
-  color: var(--dark);
-  box-shadow: 0 0 8px rgba(179,136,255,.4);
-}
-.backend-btn.active.ollama {
-  background: var(--cyan);
-  color: var(--dark);
-  box-shadow: 0 0 8px rgba(0,229,255,.4);
-}
-.backend-btn.active.groq {
-  background: #ff7a2e;
-  color: var(--dark);
-  box-shadow: 0 0 8px rgba(255,122,46,.5);
-}
+.backend-btn:hover { color: var(--text); }
+.backend-btn.active.gemini { background: var(--purple); color: var(--dark); box-shadow: 0 0 8px rgba(179,136,255,.4); }
+.backend-btn.active.ollama { background: var(--cyan);   color: var(--dark); box-shadow: 0 0 8px rgba(0,229,255,.4); }
+.backend-btn.active.groq   { background: var(--groq);   color: var(--dark); box-shadow: 0 0 8px rgba(255,122,46,.5); }
+.model-indicator .backend-tag.groq { background: rgba(255,122,46,.15); color: var(--groq); }
 
 .icon-btn {
   background: transparent;
@@ -566,98 +716,151 @@ body::after {
   align-items: center;
   justify-content: center;
   transition: all .15s;
+  flex-shrink: 0;
 }
 .icon-btn:hover { color: var(--cyan); border-color: var(--cyan); }
+
+.control-row { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-bottom: 9px; }
+.model-row { display: flex; gap: 4px; align-items: center; min-width: 0; flex: 1; justify-content: flex-end; }
+#model-select { font-size: 10.5px; padding: 4px 22px 4px 7px; max-width: 170px; min-width: 0; }
 
 /* Listen toggle pill */
 .listen-indicator {
   display: flex;
   align-items: center;
-  gap: 5px;
-  font-size: 8px;
+  gap: 6px;
+  font-size: 9.5px;
   color: var(--dim);
-  padding: 3px 7px;
+  padding: 4px 8px;
   border: 1px solid var(--border);
   border-radius: 10px;
   cursor: pointer;
   transition: all .2s;
+  white-space: nowrap;
+  background: transparent;
 }
+.listen-indicator:hover { border-color: var(--dim); }
 .listen-indicator.on { color: var(--green); border-color: var(--green); }
 .listen-indicator.on .listen-dot { background: var(--green); animation: pulse-dot 1.5s ease-in-out infinite; }
-.listen-indicator .listen-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--dim);
-}
+.listen-indicator .listen-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--dim); }
 @keyframes pulse-dot {
   0%,100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0,255,136,.7); }
   50%     { opacity: 0.5; box-shadow: 0 0 0 4px rgba(0,255,136,0); }
 }
 
-/* ── REMINDERS / NOTES ───────────────────────────────────────────────────── */
-.rem-form, .note-form { display: flex; gap: 4px; margin-bottom: 8px; }
-
-input[type="text"], input[type="password"], select {
-  background: #071a28;
+/* ── FORMS ───────────────────────────────────────────────────────────────── */
+input[type="text"], input[type="password"], input[type="time"], select {
+  background: var(--panel-2);
   border: 1px solid var(--border);
   border-radius: 4px;
   color: var(--text);
   font-family: var(--mono);
-  font-size: 10px;
-  padding: 5px 7px;
+  font-size: 11.5px;
+  padding: 6px 8px;
   outline: none;
   transition: border-color .2s;
+  min-width: 0;
 }
-input:focus { border-color: var(--cyan); }
-input::placeholder { color: var(--dim); opacity: .5; }
+input:focus, select:focus { border-color: var(--cyan); }
+input::placeholder { color: var(--dim); opacity: .55; }
+input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(.7) sepia(1) hue-rotate(150deg); cursor: pointer; }
 
-select { cursor: pointer; -webkit-appearance: none; appearance: none; padding-right: 12px; }
+select {
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 22px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237ab8cc'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 7px center;
+}
 select option { background: var(--panel); color: var(--text); }
 
-.rem-time-in { width: 62px; }
-.rem-text-in, .note-text-in { flex: 1; }
+/* ── REMINDERS / TIMERS / NOTES ──────────────────────────────────────────── */
+.side-form { display: flex; gap: 4px; margin-bottom: 8px; align-items: stretch; }
+.side-form input[type="text"] { flex: 1; }
+.rem-time-in { width: 112px; flex-shrink: 0; }
 
-.rem-add, .note-add {
+.add-btn {
   background: var(--cyan);
   border: none;
   border-radius: 4px;
   color: var(--dark);
   font-weight: bold;
   font-size: 16px;
-  width: 28px;
+  width: 30px;
   cursor: pointer;
   flex-shrink: 0;
 }
-.rem-add:hover, .note-add:hover { background: #33eeff; }
+.add-btn:hover { background: #33eeff; }
 
-.rem-list, .note-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
-
-.rem-item, .note-item {
+.toggle-chip {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 9px;
-  padding: 5px 7px;
-  background: rgba(13,58,82,.18);
-  border: 1px solid rgba(13,58,82,.35);
-  border-radius: 3px;
-}
-.rem-item span, .note-item span { flex: 1; letter-spacing: .3px; }
-.note-item .note-date { font-size: 8px; color: var(--dim); white-space: nowrap; flex: 0; }
-
-.rem-del, .note-del {
-  background: var(--red);
-  border: none;
-  border-radius: 3px;
-  color: white;
-  font-weight: bold;
-  font-size: 12px;
-  width: 18px;
-  height: 18px;
+  gap: 4px;
+  font-size: 9.5px;
+  color: var(--dim);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0 7px;
   cursor: pointer;
   flex-shrink: 0;
 }
+.toggle-chip input { accent-color: var(--cyan); cursor: pointer; }
+.toggle-chip:has(input:checked) { color: var(--cyan); border-color: var(--cyan); }
+
+.presets { display: flex; gap: 4px; margin-bottom: 8px; }
+.presets .mini-btn { flex: 1; padding: 4px 0; font-size: 10px; }
+
+.side-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; }
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  padding: 7px 8px;
+  background: rgba(13,58,82,.18);
+  border: 1px solid rgba(13,58,82,.45);
+  border-radius: 4px;
+  animation: fadeIn .2s ease;
+}
+.item-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.item-top { display: flex; align-items: center; gap: 7px; }
+.item-text { line-height: 1.45; word-break: break-word; user-select: text; }
+.item-meta { font-size: 9.5px; color: var(--faint); letter-spacing: .5px; }
+.rem-time { font-family: var(--head); font-size: 12px; color: var(--cyan); letter-spacing: 1px; }
+.badge {
+  font-size: 8.5px;
+  letter-spacing: 1px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  border: 1px solid var(--purple);
+  color: var(--purple);
+}
+
+.del-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  color: var(--faint);
+  font-weight: bold;
+  font-size: 14px;
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all .15s;
+}
+.del-btn:hover { color: var(--red); border-color: var(--red); background: rgba(255,77,94,.08); }
+
+.timer-left { font-family: var(--head); font-size: 15px; color: var(--cyan); letter-spacing: 1px; }
+.timer-bar { height: 3px; background: var(--track); border-radius: 2px; overflow: hidden; margin-top: 2px; }
+.timer-bar > div { height: 100%; background: var(--cyan); box-shadow: 0 0 6px var(--cyan); transition: width 1s linear; }
+.item.urgent .timer-left { color: var(--orange); }
+.item.urgent .timer-bar > div { background: var(--orange); box-shadow: 0 0 6px var(--orange); }
 
 /* ── INPUT BAR ───────────────────────────────────────────────────────────── */
 .input-bar {
@@ -671,10 +874,10 @@ select option { background: var(--panel); color: var(--text); }
 }
 
 .mic-btn {
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  background: #071a28;
+  background: var(--panel-2);
   border: 1px solid var(--border);
   font-size: 16px;
   cursor: pointer;
@@ -685,26 +888,75 @@ select option { background: var(--panel); color: var(--text); }
   transition: all .2s;
 }
 .mic-btn:hover   { border-color: var(--cyan); }
-.mic-btn.active  { background: var(--cyan); border-color: var(--cyan); box-shadow: 0 0 16px rgba(0,229,255,.55); }
+.mic-btn.active  { background: var(--green); border-color: var(--green); box-shadow: 0 0 16px rgba(0,255,136,.55); }
 
-#cmd-input { flex: 1; height: 38px; font-size: 12px; padding: 0 12px; }
+.input-wrap { flex: 1; position: relative; display: flex; }
+#cmd-input { flex: 1; height: 40px; font-size: 13px; padding: 0 180px 0 13px; }
+.input-hint {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 9.5px;
+  color: var(--faint);
+  letter-spacing: .5px;
+  pointer-events: none;
+  white-space: nowrap;
+}
 
 .send-btn {
-  height: 38px;
-  padding: 0 20px;
+  height: 40px;
+  min-width: 92px;
+  padding: 0 18px;
   background: #0d3a80;
   border: 1px solid var(--cyan);
   border-radius: 4px;
   color: var(--cyan);
-  font-family: var(--mono);
   font-weight: bold;
-  font-size: 11px;
+  font-size: 11.5px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
   cursor: pointer;
   flex-shrink: 0;
+  transition: all .15s;
 }
 .send-btn:hover { background: var(--cyan); color: var(--dark); }
+.send-btn.stop { background: rgba(255,77,94,.12); border-color: var(--red); color: var(--red); }
+.send-btn.stop:hover { background: var(--red); color: white; }
+
+/* ── TOASTS ──────────────────────────────────────────────────────────────── */
+.toasts {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 10000;
+  pointer-events: none;
+}
+.toast {
+  pointer-events: auto;
+  cursor: pointer;
+  min-width: 240px;
+  max-width: 340px;
+  background: #06192a;
+  border: 1px solid var(--cyan);
+  border-left-width: 3px;
+  border-radius: 6px;
+  padding: 10px 14px;
+  box-shadow: 0 8px 30px rgba(0,0,0,.55), 0 0 18px rgba(0,229,255,.15);
+  animation: toastIn .25s ease;
+  transition: opacity .3s, transform .3s;
+}
+.toast.out { opacity: 0; transform: translateX(20px); }
+.toast.alarm { border-color: var(--orange); box-shadow: 0 8px 30px rgba(0,0,0,.55), 0 0 22px rgba(255,170,0,.3); }
+.toast.error { border-color: var(--red); }
+.toast-title { font-family: var(--head); font-size: 10.5px; letter-spacing: 2px; text-transform: uppercase; color: var(--cyan); }
+.toast.alarm .toast-title { color: var(--orange); }
+.toast.error .toast-title { color: var(--red); }
+.toast-text { font-size: 12.5px; margin-top: 5px; line-height: 1.45; }
+@keyframes toastIn { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
 
 /* ── SETTINGS MODAL ──────────────────────────────────────────────────────── */
 .modal-overlay {
@@ -723,11 +975,14 @@ select option { background: var(--panel); color: var(--text); }
   background: var(--panel);
   border: 1px solid var(--cyan);
   border-radius: 8px;
-  padding: 20px;
-  width: 460px;
-  max-width: 90vw;
+  width: 560px;
+  max-width: 92vw;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
   position: relative;
   box-shadow: 0 0 30px rgba(0,229,255,.15);
+  animation: bubbleIn .2s ease;
 }
 
 .modal-title {
@@ -736,13 +991,14 @@ select option { background: var(--panel); color: var(--text); }
   letter-spacing: 3px;
   color: var(--cyan);
   text-transform: uppercase;
-  margin-bottom: 16px;
-  padding-bottom: 10px;
+  padding: 16px 20px 12px;
   border-bottom: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
+
+.modal-body { overflow-y: auto; padding: 6px 20px 4px; }
 
 .modal-close {
   background: transparent;
@@ -753,80 +1009,97 @@ select option { background: var(--panel); color: var(--text); }
 }
 .modal-close:hover { color: var(--red); }
 
-.field-group { margin-bottom: 14px; }
+.modal-section { padding: 12px 0 4px; border-bottom: 1px solid rgba(13,58,82,.6); }
+.modal-section:last-child { border-bottom: none; }
+.section-title {
+  font-family: var(--head);
+  font-size: 10.5px;
+  letter-spacing: 3px;
+  color: var(--dim);
+  margin-bottom: 12px;
+}
+
+.field-group { margin-bottom: 13px; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .field-label {
-  display: block;
-  font-size: 9px;
-  letter-spacing: 2px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 10px;
+  letter-spacing: 1.5px;
   color: var(--dim);
   text-transform: uppercase;
   margin-bottom: 5px;
 }
-.field-label .hint { color: var(--cyan); opacity: .7; font-size: 8px; margin-left: 6px; }
+.field-label .hint { color: var(--cyan); opacity: .7; font-size: 9px; letter-spacing: .5px; text-transform: none; }
+.field-help { font-size: 10px; color: var(--faint); margin-top: 4px; line-height: 1.4; }
+.field-error { font-size: 10.5px; color: var(--red); margin-top: 4px; }
+.field-error:empty { display: none; }
 
-.field-group input, .field-group select {
+.field-group input[type="text"], .field-group input[type="password"], .field-group select {
   width: 100%;
   padding: 8px 10px;
-  font-size: 11px;
+  font-size: 12px;
 }
+.field-group select { padding-right: 24px; }
+
+.key-status { margin-left: auto; font-size: 9.5px; letter-spacing: .5px; text-transform: none; color: var(--faint); }
+.key-status.ok { color: var(--green); }
 
 .field-check {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 10px;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 12px;
   cursor: pointer;
+  line-height: 1.4;
 }
-.field-check input { width: auto; cursor: pointer; transform: scale(1.2); accent-color: var(--cyan); }
+.field-check input { width: auto; cursor: pointer; transform: scale(1.2); accent-color: var(--cyan); margin-top: 3px; }
+.field-check small { display: block; color: var(--faint); font-size: 10px; }
 
 .modal-actions {
   display: flex;
   gap: 8px;
   justify-content: flex-end;
-  margin-top: 18px;
-  padding-top: 12px;
+  padding: 12px 20px 16px;
   border-top: 1px solid var(--border);
 }
 
 .modal-btn {
-  padding: 8px 16px;
+  padding: 8px 18px;
   border-radius: 4px;
-  font-family: var(--mono);
   font-weight: bold;
-  font-size: 10px;
+  font-size: 10.5px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
   cursor: pointer;
   border: 1px solid;
   transition: all .15s;
 }
-.modal-btn.primary {
-  background: var(--cyan);
-  color: var(--dark);
-  border-color: var(--cyan);
-}
+.modal-btn.primary { background: var(--cyan); color: var(--dark); border-color: var(--cyan); }
 .modal-btn.primary:hover { background: #33eeff; }
-.modal-btn.secondary {
-  background: transparent;
-  color: var(--dim);
-  border-color: var(--border);
-}
+.modal-btn.secondary { background: transparent; color: var(--dim); border-color: var(--border); }
 .modal-btn.secondary:hover { color: var(--cyan); border-color: var(--cyan); }
 
 .api-link {
-  display: inline-block;
-  font-size: 9px;
+  font-size: 9.5px;
   color: var(--cyan);
   text-decoration: none;
-  margin-top: 4px;
+  letter-spacing: .5px;
+  text-transform: none;
+  cursor: pointer;
 }
 .api-link:hover { text-decoration: underline; }
 
 /* ── Scrollbars ───────────────────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--dim); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
 </style>
 </head>
 <body>
@@ -954,8 +1227,12 @@ select option { background: var(--panel); color: var(--text); }
         </div>
       </div>
 
+
       <div class="card fill">
-        <div class="card-title">Communications</div>
+        <div class="card-title">
+          <span>Communications</span>
+          <button class="mini-btn" onclick="clearChat()" title="Clear the chat (the AI keeps its memory — say 'clear memory' for that)">Clear</button>
+        </div>
         <div class="chat-messages" id="chat"></div>
       </div>
     </div>
@@ -966,59 +1243,77 @@ select option { background: var(--panel); color: var(--text); }
         <div class="card-title">
           <span>Control</span>
           <div style="display:flex; gap:6px; align-items:center;">
-            <div class="backend-toggle">
-              <button class="backend-btn groq active"   id="btn-groq"   onclick="switchBackend('groq')">Groq</button>
-              <button class="backend-btn gemini"        id="btn-gemini" onclick="switchBackend('gemini')">Gemini</button>
-              <button class="backend-btn ollama"        id="btn-ollama" onclick="switchBackend('ollama')">Ollama</button>
+            <div class="backend-toggle" role="group" aria-label="AI backend">
+              <button class="backend-btn groq"   id="btn-groq"   onclick="switchBackend('groq')"   title="Groq — fastest, free key">Groq</button>
+              <button class="backend-btn gemini" id="btn-gemini" onclick="switchBackend('gemini')" title="Google Gemini — free tier">Gemini</button>
+              <button class="backend-btn ollama" id="btn-ollama" onclick="switchBackend('ollama')" title="Ollama — runs locally, private">Ollama</button>
             </div>
-            <button class="icon-btn" onclick="openSettings()" title="Settings">⚙</button>
+            <button class="icon-btn" onclick="openSettings()" title="Settings (Ctrl+,)" aria-label="Settings">⚙</button>
           </div>
         </div>
 
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <div class="listen-indicator" id="listen-indicator" onclick="toggleAlwaysListen()">
-            <div class="listen-dot"></div>
+        <div class="control-row">
+          <button class="listen-indicator" id="listen-indicator" onclick="toggleAlwaysListen()" title="Always-on wake-word listening">
+            <span class="listen-dot"></span>
             <span id="listen-text">24/7 OFF</span>
+          </button>
+          <div class="model-row">
+            <select id="model-select" onchange="switchModel(this.value)" title="AI model" aria-label="AI model"></select>
+            <button class="icon-btn" onclick="refreshModels()" title="Refresh model list" aria-label="Refresh model list" style="font-size:12px">↻</button>
           </div>
-          <select class="" style="font-size:9px; padding:3px 6px; max-width:130px;" id="model-select" onchange="switchModel(this.value)">
-          </select>
         </div>
 
         <div class="quick-grid">
-          <button class="quick-btn" onclick="sendCmd('stats')">📊 Stats</button>
-          <button class="quick-btn" onclick="sendCmd('open chrome')">🌐 Chrome</button>
-          <button class="quick-btn" onclick="sendCmd('open terminal')">⌨ Terminal</button>
-          <button class="quick-btn" onclick="sendCmd('files')">📁 Files</button>
-          <button class="quick-btn" onclick="sendCmd('open vscode')">💻 VS Code</button>
-          <button class="quick-btn" onclick="sendCmd('screenshot')">📸 Screen</button>
-          <button class="quick-btn" onclick="sendCmd('clipboard')">📋 Clip</button>
-          <button class="quick-btn" onclick="sendCmd('help')">❓ Help</button>
+          <button class="quick-btn" onclick="sendCmd('stats')"><span>📊</span>Stats</button>
+          <button class="quick-btn" onclick="sendCmd('weather')"><span>🌤</span>Weather</button>
+          <button class="quick-btn" onclick="sendCmd('what time is it')"><span>🕒</span>Time</button>
+          <button class="quick-btn" onclick="sendCmd('open chrome')"><span>🌐</span>Chrome</button>
+          <button class="quick-btn" onclick="sendCmd('open vscode')"><span>💻</span>VS Code</button>
+          <button class="quick-btn" onclick="sendCmd('open terminal')"><span>⌨</span>Terminal</button>
+          <button class="quick-btn" onclick="sendCmd('files')"><span>📁</span>Files</button>
+          <button class="quick-btn" onclick="sendCmd('screenshot')"><span>📸</span>Screen</button>
+          <button class="quick-btn" onclick="sendCmd('help')"><span>❓</span>Help</button>
         </div>
       </div>
 
       <div class="card fill">
-        <div class="tab-bar">
-          <button class="tab-btn active" onclick="switchTab('reminders', this)">⏰ Reminders</button>
-          <button class="tab-btn" onclick="switchTab('notes', this)">📝 Notes</button>
+        <div class="tab-bar" role="tablist">
+          <button class="tab-btn active" data-tab="reminders" onclick="switchTab('reminders')">⏰ Reminders<span class="tab-count" id="rem-count"></span></button>
+          <button class="tab-btn" data-tab="timers" onclick="switchTab('timers')">⏱ Timers<span class="tab-count" id="timer-count"></span></button>
+          <button class="tab-btn" data-tab="notes" onclick="switchTab('notes')">📝 Notes<span class="tab-count" id="note-count"></span></button>
         </div>
 
         <div class="tab-content active" id="tab-reminders">
-          <div class="rem-form">
-            <input type="text" class="rem-time-in" id="rem-t" placeholder="HH:MM" maxlength="5">
-            <input type="text" class="rem-text-in" id="rem-x" placeholder="Reminder text..."
-                   onkeydown="if(event.key==='Enter') addReminder()">
-            <button class="rem-add" onclick="addReminder()">+</button>
+          <div class="side-form">
+            <input type="time" class="rem-time-in" id="rem-t" title="Time">
+            <input type="text" id="rem-x" placeholder="Remind me to…" onkeydown="if(event.key==='Enter') addReminder()">
+            <label class="toggle-chip" title="Repeat every day"><input type="checkbox" id="rem-daily">Daily</label>
+            <button class="add-btn" onclick="addReminder()" title="Add reminder">+</button>
           </div>
-          <div class="rem-list" id="rem-list"></div>
+          <div class="side-list" id="rem-list"></div>
+        </div>
+
+        <div class="tab-content" id="tab-timers">
+          <div class="side-form">
+            <input type="text" id="timer-in" placeholder="5m · 1h 30m · 90s" onkeydown="if(event.key==='Enter') addTimer()">
+            <input type="text" id="timer-label" placeholder="Label (optional)" onkeydown="if(event.key==='Enter') addTimer()">
+            <button class="add-btn" onclick="addTimer()" title="Start timer">+</button>
+          </div>
+          <div class="presets">
+            <button class="mini-btn" onclick="sendCmd('timer 1 minute')">1m</button>
+            <button class="mini-btn" onclick="sendCmd('timer 5 minutes')">5m</button>
+            <button class="mini-btn" onclick="sendCmd('timer 10 minutes')">10m</button>
+            <button class="mini-btn" onclick="sendCmd('timer 25 minutes called focus')">25m focus</button>
+          </div>
+          <div class="side-list" id="timer-list"></div>
         </div>
 
         <div class="tab-content" id="tab-notes">
-          <div class="note-form">
-            <input type="text" class="note-text-in" id="note-text" placeholder="Quick note..."
-                   onkeydown="if(event.key==='Enter') addNote()">
-            <button class="note-add" onclick="addNote()">+</button>
+          <div class="side-form">
+            <input type="text" id="note-text" placeholder="Quick note…" onkeydown="if(event.key==='Enter') addNote()">
+            <button class="add-btn" onclick="addNote()" title="Save note">+</button>
           </div>
-          <div class="note-list" id="note-list"></div>
+          <div class="side-list" id="note-list"></div>
         </div>
       </div>
     </div>
@@ -1027,56 +1322,114 @@ select option { background: var(--panel); color: var(--text); }
 
   <!-- Input bar -->
   <div class="input-bar">
-    <button class="mic-btn" id="mic-btn" onclick="toggleMic()">🎤</button>
-    <input type="text" id="cmd-input"
-           placeholder="Ask T.M.O.S anything... (or say 'TMOS' to activate)"
-           onkeydown="if(event.key==='Enter') doSend()">
-    <button class="send-btn" onclick="doSend()">Send</button>
+    <button class="mic-btn" id="mic-btn" onclick="toggleMic()" title="Speak (Ctrl+M)" aria-label="Speak">🎤</button>
+    <div class="input-wrap">
+      <input type="text" id="cmd-input" autocomplete="off" spellcheck="false"
+             placeholder="Ask T.M.O.S anything… or say “TMOS” to wake it">
+      <span class="input-hint" id="input-hint">↑ history · Esc stop</span>
+    </div>
+    <button class="send-btn" id="send-btn" onclick="sendOrStop()">Send</button>
   </div>
 
 </div>
 
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
 <!-- ═══ SETTINGS MODAL ══════════════════════════════════════════════════════ -->
-<div class="modal-overlay" id="settings-modal">
-  <div class="modal">
+<div class="modal-overlay" id="settings-modal" onmousedown="if(event.target===this) closeSettings()">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
     <div class="modal-title">
-      <span>◈  Settings</span>
-      <button class="modal-close" onclick="closeSettings()">✕</button>
+      <span id="settings-title">◈  Settings</span>
+      <button class="modal-close" onclick="closeSettings()" aria-label="Close">✕</button>
     </div>
 
-    <div class="field-group">
-      <label class="field-label">
-        Groq API Key <span class="hint">(recommended — fastest & free)</span>
-        <a href="#" class="api-link" onclick="event.preventDefault(); openExternal('https://console.groq.com/keys')">Get free key →</a>
-      </label>
-      <input type="password" id="cfg-groq-key" placeholder="gsk_...">
-    </div>
+    <div class="modal-body">
+      <div class="modal-section">
+        <div class="section-title">AI</div>
 
-    <div class="field-group">
-      <label class="field-label">
-        Gemini API Key
-        <a href="#" class="api-link" onclick="event.preventDefault(); openExternal('https://aistudio.google.com/apikey')">Get free key →</a>
-      </label>
-      <input type="password" id="cfg-api-key" placeholder="AIza...">
-    </div>
+        <div class="field-group">
+          <label class="field-label" for="cfg-groq-key">
+            Groq API Key <span class="hint">fastest &amp; free</span>
+            <a class="api-link" onclick="openExternal('https://console.groq.com/keys')">Get free key →</a>
+            <span class="key-status" id="groq-status">not set</span>
+          </label>
+          <input type="password" id="cfg-groq-key" placeholder="gsk_…" autocomplete="off">
+        </div>
 
-    <div class="field-group">
-      <label class="field-label">Wake Word <span class="hint">(lowercase)</span></label>
-      <input type="text" id="cfg-wake" placeholder="tmos" value="tmos">
-    </div>
+        <div class="field-group">
+          <label class="field-label" for="cfg-api-key">
+            Gemini API Key
+            <a class="api-link" onclick="openExternal('https://aistudio.google.com/apikey')">Get free key →</a>
+            <span class="key-status" id="gemini-status">not set</span>
+          </label>
+          <input type="password" id="cfg-api-key" placeholder="AIza…" autocomplete="off">
+        </div>
 
-    <div class="field-group">
-      <label class="field-check">
-        <input type="checkbox" id="cfg-listen" checked>
-        <span>Always-on wake word listening (24/7)</span>
-      </label>
-    </div>
+        <div class="field-group">
+          <label class="field-check">
+            <input type="checkbox" id="cfg-tools" checked>
+            <span>Let the AI act on this PC
+              <small>Open apps and sites, set reminders and timers, save notes, check weather and stats. It can never delete files or shut down.</small></span>
+          </label>
+        </div>
+      </div>
 
-    <div class="field-group">
-      <label class="field-check">
-        <input type="checkbox" id="cfg-voice" checked>
-        <span>Voice responses (TTS)</span>
-      </label>
+      <div class="modal-section">
+        <div class="section-title">Voice</div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-check">
+              <input type="checkbox" id="cfg-voice" checked>
+              <span>Speak replies aloud</span>
+            </label>
+          </div>
+          <div class="field-group">
+            <label class="field-check">
+              <input type="checkbox" id="cfg-listen" checked>
+              <span>Always-on wake word (24/7)</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label" for="cfg-tts-voice">Voice</label>
+            <select id="cfg-tts-voice"></select>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="cfg-wake">Wake word</label>
+            <input type="text" id="cfg-wake" placeholder="tmos" value="tmos">
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="cfg-stt">Speech recognition</label>
+          <select id="cfg-stt">
+            <option value="google">Google — free, no key needed</option>
+            <option value="groq">Groq Whisper — more accurate, uses your Groq key</option>
+          </select>
+          <div class="field-help">Arabic replies are read with an Arabic voice automatically.</div>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="section-title">System</div>
+
+        <div class="field-group">
+          <label class="field-label" for="cfg-hotkey">Global hotkey <span class="hint">summon T.M.O.S from any app</span></label>
+          <input type="text" id="cfg-hotkey" placeholder="ctrl+shift+space">
+          <div class="field-help">For example <code>ctrl+shift+space</code>, <code>alt+t</code> or <code>win+f9</code>. Leave empty to turn it off.</div>
+          <div class="field-error" id="hotkey-error"></div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-check">
+            <input type="checkbox" id="cfg-startup">
+            <span>Start with Windows <small>Starts minimized in the tray when you sign in.</small></span>
+          </label>
+        </div>
+      </div>
     </div>
 
     <div class="modal-actions">
@@ -1326,103 +1679,118 @@ WF.forEach((h, i) => {
   wf.appendChild(b);
 });
 
+const $ = id => document.getElementById(id);
+
 // ══════════════════════════════════════════════════════════════════════════
 //  BRIDGE
 // ══════════════════════════════════════════════════════════════════════════
 let bridge = null;
 let _streamBubble = null;
-let _currentBackend = 'gemini';
+let _busy = false;
+let _speaking = false;
+let _micOn = false;
+let _config = {};
+let _models = { backend: 'groq', current: '', models: [] };
 
 new QWebChannel(qt.webChannelTransport, ch => {
   bridge = ch.objects.bridge;
 
   bridge.stats_pushed.connect(json  => updateStats(JSON.parse(json)));
   bridge.chat_pushed.connect((t, u) => addBubble(t, u ? 'user' : 'ai'));
+  bridge.notice_pushed.connect(t => addBubble(t, 'notice'));
+  bridge.history_pushed.connect(j => renderHistory(JSON.parse(j)));
+  bridge.chat_cleared.connect(() => { $('chat').innerHTML = ''; _streamBubble = null; showEmptyState(); });
   bridge.log_pushed.connect((t, tp) => addLog(t, tp));
   bridge.thinking_on.connect(showThinking);
-  bridge.thinking_off.connect(hideThinking);
+  bridge.thinking_off.connect(() => { hideThinking(); setOrbState('processing', false); });
+  bridge.busy_pushed.connect(b => { _busy = b; updateSendButton(); });
   bridge.reminders_pushed.connect(j => renderReminders(JSON.parse(j)));
+  bridge.timers_pushed.connect(j => renderTimers(JSON.parse(j)));
   bridge.notes_pushed.connect(j => renderNotes(JSON.parse(j)));
-  bridge.reminder_fired.connect(j => {
-    const r = JSON.parse(j);
-    addBubble('⏰  Reminder: ' + r.text, 'ai');
-    addLog('REMINDER: ' + r.text, 'warn');
-  });
+  bridge.alert_pushed.connect(j => showToast(JSON.parse(j)));
   bridge.mic_state_pushed.connect(on => {
-    document.getElementById('mic-btn').classList.toggle('active', on);
-    document.getElementById('web-wrap').classList.toggle('listening', on);
+    _micOn = on;
+    $('mic-btn').classList.toggle('active', on);
+    setOrbState('listening', on);
   });
-  bridge.model_pushed.connect(m => {
-    const sel = document.getElementById('model-select');
-    sel.value = m;
-    document.getElementById('model-indicator-text').textContent = 'MODEL: ' + m.toUpperCase();
-  });
-  bridge.backend_pushed.connect(b => {
-    _currentBackend = b;
-    document.getElementById('btn-groq').classList.toggle('active',   b === 'groq');
-    document.getElementById('btn-gemini').classList.toggle('active', b === 'gemini');
-    document.getElementById('btn-ollama').classList.toggle('active', b === 'ollama');
-    const tag = document.getElementById('backend-tag');
-    if (tag) {
-      tag.textContent = b.toUpperCase();
-      tag.classList.toggle('gemini', b === 'gemini');
-      tag.classList.toggle('groq',   b === 'groq');
-    }
-    rebuildModelDropdown(b);
-  });
-  bridge.config_pushed.connect(j => {
-    const c = JSON.parse(j);
-    document.getElementById('cfg-wake').value = c.wake_word || 'tmos';
-    document.getElementById('cfg-listen').checked = !!c.always_listen;
-    updateListenIndicator(!!c.always_listen);
-  });
+  bridge.model_pushed.connect(setCurrentModel);
+  bridge.models_pushed.connect(j => { _models = JSON.parse(j); rebuildModelDropdown(); });
+  bridge.backend_pushed.connect(setBackend);
+  bridge.config_pushed.connect(j => applyConfig(JSON.parse(j)));
   bridge.wake_detected.connect(() => {
-    document.getElementById('web-wrap').classList.add('listening');
-    setTimeout(() => document.getElementById('web-wrap').classList.remove('listening'), 1500);
+    setOrbState('listening', true);
+    setTimeout(() => { if (!_micOn) setOrbState('listening', false); }, 1500);
   });
-  bridge.speaking_pushed.connect(on => {
-    document.getElementById('web-wrap').classList.toggle('speaking', on);
-  });
-
-  bridge.ai_token.connect(token => {
-    if (!_streamBubble) {
-      hideThinking();
-      _streamBubble = addBubble('', 'ai');
-    }
-    const textEl = _streamBubble.querySelector('.bubble-text');
-    textEl._raw = (textEl._raw || '') + token;
-    textEl.innerHTML = renderMd(textEl._raw);
-    const chat = document.getElementById('chat');
-    chat.scrollTop = chat.scrollHeight;
-  });
-
-  bridge.ai_stream_done.connect(() => {
-    if (_streamBubble) {
-      const textEl = _streamBubble.querySelector('.bubble-text');
-      textEl.innerHTML = renderMd(textEl._raw || '');
-    }
-    _streamBubble = null;
-    document.getElementById('web-wrap').classList.remove('processing');
-  });
+  bridge.speaking_pushed.connect(on => { _speaking = on; setOrbState('speaking', on); updateSendButton(); });
+  bridge.focus_input.connect(() => { const i = $('cmd-input'); i.focus(); i.select(); });
+  bridge.tool_pushed.connect(j => addToolChip(JSON.parse(j)));
+  bridge.ai_token.connect(onToken);
+  bridge.ai_stream_done.connect(onStreamDone);
 
   addLog('Interface ready', 'ok');
+  bridge.ui_ready();
 });
 
-// ══════════════════════════════════════════════════════════════════════════
-//  MARKDOWN
-// ══════════════════════════════════════════════════════════════════════════
-function renderMd(s) {
-  s = esc(s);
-  s = s.replace(/```(\w*)\n?([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
-  s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
-  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  s = s.replace(/\*(.+?)\*/g, '<em>$1</em>');
-  s = s.replace(/\n/g, '<br>');
-  return s;
+function setOrbState(state, on) {
+  const wrap = $('web-wrap');
+  wrap.classList.toggle(state, on);
+  document.querySelector('.orb-card').classList.toggle('live',
+    wrap.classList.contains('speaking') || wrap.classList.contains('listening'));
 }
 
+// ══════════════════════════════════════════════════════════════════════════
+//  MARKDOWN (escape first, then format — never trusts the model's HTML)
+// ══════════════════════════════════════════════════════════════════════════
 function esc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                  .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function renderMd(src) {
+  src = String(src || '').replace(/\r\n/g, '\n').replace(/\s+$/, '');
+  const blocks = [];
+  // Fenced code — an unfinished fence (still streaming) runs to the end.
+  src = src.replace(/```([\w+#.-]*)[^\n]*\n?([\s\S]*?)(?:```|$)/g, (_, lang, code) => {
+    blocks.push({ lang, code: code.replace(/\n$/, '') });
+    return `\u0000${blocks.length - 1}\u0000`;
+  });
+
+  const codeBlock = b =>
+    `<div class="code-block"><div class="code-head"><span>${esc(b.lang || 'code')}</span>` +
+    `<button class="mini-btn" data-copy-code>Copy</button></div><pre><code>${esc(b.code)}</code></pre></div>`;
+
+  const inline = s => {
+    const codes = [];
+    s = s.replace(/`([^`]+)`/g, (_, c) => { codes.push(c); return `\u0001${codes.length - 1}\u0001`; });
+    s = esc(s);
+    s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2">$1</a>');
+    s = s.replace(/(^|[\s(])(https?:\/\/[^\s<)]+[^\s<).,;:!?'"])/g, '$1<a href="$2">$2</a>');
+    s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    s = s.replace(/(^|[^*\w])\*(?!\s)(.+?)(?<!\s)\*(?!\w)/g, '$1<em>$2</em>');
+    s = s.replace(/\u0001(\d+)\u0001/g, (_, i) => `<code>${esc(codes[+i])}</code>`);
+    s = s.replace(/\u0000(\d+)\u0000/g, (_, i) => codeBlock(blocks[+i]));
+    return s;
+  };
+
+  let html = '', list = null, para = [];
+  const flushPara  = () => { if (para.length) { html += '<p>' + para.map(inline).join('<br>') + '</p>'; para = []; } };
+  const closeList  = () => { if (list) { html += `</${list}>`; list = null; } };
+  const openList   = t  => { if (list !== t) { closeList(); html += `<${t}>`; list = t; } };
+
+  for (const line of src.split('\n')) {
+    let m;
+    if ((m = line.match(/^\s*\u0000(\d+)\u0000\s*$/))) { flushPara(); closeList(); html += codeBlock(blocks[+m[1]]); continue; }
+    if ((m = line.match(/^\s{0,3}#{1,6}\s+(.*)$/)))     { flushPara(); closeList(); html += `<h3>${inline(m[1])}</h3>`; continue; }
+    if ((m = line.match(/^\s*[-*•]\s+(.*)$/)))          { flushPara(); openList('ul'); html += `<li>${inline(m[1])}</li>`; continue; }
+    if ((m = line.match(/^\s*\d+[.)]\s+(.*)$/)))        { flushPara(); openList('ol'); html += `<li>${inline(m[1])}</li>`; continue; }
+    if ((m = line.match(/^\s*>\s?(.*)$/)))              { flushPara(); closeList(); html += `<blockquote>${inline(m[1])}</blockquote>`; continue; }
+    if (/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(line))      { flushPara(); closeList(); html += '<hr>'; continue; }
+    if (!line.trim())                                   { flushPara(); closeList(); continue; }
+    closeList();
+    para.push(line);
+  }
+  flushPara(); closeList();
+  return html;
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -1433,28 +1801,23 @@ function updateStats(s) {
   setBar('cpu',  cpu.percent,  cpu.percent + '%');
   setBar('ram',  ram.percent,  ram.used + '/' + ram.total + ' GB');
   setBar('disk', disk.percent, disk.used + '/' + disk.total + ' GB');
-  document.getElementById('net-row').textContent =
-    'NET  ↑ ' + (n.upload||0) + ' KB/s  ↓ ' + (n.download||0) + ' KB/s';
-  document.getElementById('os-row').textContent =
-    o.platform + ' ' + (o.release||'') + '  ⏱ ' + o.uptime + 'h';
+  $('net-row').textContent = 'NET  ↑ ' + (n.upload || 0) + ' KB/s  ↓ ' + (n.download || 0) + ' KB/s';
+  $('os-row').textContent  = o.platform + ' ' + (o.release || '') + '  ⏱ up ' + o.uptime + 'h';
 
-  const battRow = document.getElementById('batt-row');
+  const battRow = $('batt-row');
   if (batt) {
     battRow.style.display = 'flex';
     document.querySelector('.battery-icon').textContent = batt.plugged ? '⚡' : (batt.percent < 20 ? '🪫' : '🔋');
-    let text = batt.percent + '%';
-    if (batt.plugged) text += '  (charging)';
-    document.getElementById('batt-val').textContent = text;
+    $('batt-val').textContent = batt.percent + '%' + (batt.plugged ? '  (charging)' : '');
   } else {
     battRow.style.display = 'none';
   }
 }
 
 function setBar(id, pct, label) {
-  const fill = document.getElementById(id + '-fill');
-  const val  = document.getElementById(id + '-val');
+  const fill = $(id + '-fill');
   fill.style.width = Math.min(100, Math.max(0, pct)) + '%';
-  val.textContent  = label;
+  $(id + '-val').textContent = label;
   fill.className = 'stat-fill' + (pct > 85 ? ' high' : pct > 65 ? ' warn' : '');
 }
 
@@ -1462,157 +1825,392 @@ function setBar(id, pct, label) {
 //  CHAT
 // ══════════════════════════════════════════════════════════════════════════
 let _thinking = null;
+const SUGGESTIONS = [
+  "What's the weather?",
+  'Open Spotify and remind me at 5pm to stretch',
+  'Set a 10 minute timer for tea',
+  'How is my PC doing?',
+  'Explain black holes in 3 sentences',
+];
 
-function addBubble(text, cls) {
-  const el = document.getElementById('chat');
-  const d  = document.createElement('div');
-  d.className = 'bubble ' + cls;
-  const sender = cls === 'user' ? 'YOU' : 'T.M.O.S';
-  const rendered = cls === 'user' ? esc(text) : renderMd(text);
-  d.innerHTML  =
-    `<div class="bubble-sender">${sender}</div>` +
-    `<div class="bubble-text">${rendered}</div>`;
-  el.appendChild(d);
-  el.scrollTop = el.scrollHeight;
+function scrollChat(force) {
+  const c = $('chat');
+  if (force || c.scrollHeight - c.scrollTop - c.clientHeight < 140) c.scrollTop = c.scrollHeight;
+}
+
+function fmtTime(d, withDay) {
+  const t = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  if (!withDay || d.toDateString() === new Date().toDateString()) return t;
+  return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) + ' ' + t;
+}
+
+function miniBtn(label, title, fn) {
+  const b = document.createElement('button');
+  b.className = 'mini-btn';
+  b.textContent = label;
+  b.title = title;
+  b.onclick = fn;
+  return b;
+}
+
+function addBubble(text, cls, opts = {}) {
+  const chat = $('chat');
+  if (cls !== 'notice') removeEmptyState();
+  const d = document.createElement('div');
+  d.className = 'bubble ' + cls + (opts.history ? ' history' : '');
+  const sender = cls === 'user' ? 'You' : cls === 'notice' ? 'System' : 'T.M.O.S';
+  const when = opts.ts ? new Date(opts.ts * 1000) : new Date();
+  d.innerHTML =
+    `<div class="bubble-head"><span class="bubble-sender">${sender}</span>` +
+    `<span class="bubble-time">${fmtTime(when, opts.history)}</span><span class="bubble-actions"></span></div>` +
+    `<div class="bubble-text"></div>`;
+  d.querySelector('.bubble-text').innerHTML = cls === 'user' ? esc(text) : renderMd(text);
+
+  const empty = $('empty-state');
+  if (cls === 'notice' && empty) chat.insertBefore(d, empty);
+  else if (_thinking && _thinking.parentNode === chat && cls !== 'user') chat.insertBefore(d, _thinking);
+  else chat.appendChild(d);
+
+  if (!opts.stream) finalizeBubble(d, text, cls);
+  while (chat.children.length > 300) chat.removeChild(chat.firstChild);
+  scrollChat(cls === 'user' || opts.force);
   return d;
 }
 
+function finalizeBubble(d, raw, cls) {
+  const actions = d.querySelector('.bubble-actions');
+  if (!actions || !raw || actions.childElementCount || cls === 'notice') return;
+  actions.appendChild(miniBtn('Copy', 'Copy text', () => bridge && bridge.copy_text(raw)));
+  if (cls === 'user') {
+    actions.appendChild(miniBtn('Edit', 'Put back in the input box', () => {
+      const i = $('cmd-input'); i.value = raw; i.focus(); updateSendButton();
+    }));
+  }
+}
+
+function renderHistory(list) {
+  const chat = $('chat');
+  if (!list.length) { showEmptyState(); return; }
+  const frag = document.createDocumentFragment();
+  for (const m of list) {
+    const d = addBubble(m.text, m.user ? 'user' : 'ai', { history: true, ts: m.ts });
+    frag.appendChild(d);
+  }
+  chat.prepend(frag);
+  const div = document.createElement('div');
+  div.className = 'history-divider';
+  div.textContent = 'Earlier conversation';
+  chat.prepend(div);
+  const now = document.createElement('div');
+  now.className = 'history-divider';
+  now.textContent = 'Now';
+  chat.insertBefore(now, chat.children[list.length + 1] || null);
+  scrollChat(true);
+}
+
+function showEmptyState() {
+  if ($('empty-state') || [...$('chat').children].some(c => !c.classList.contains('notice'))) return;
+  const e = document.createElement('div');
+  e.className = 'empty-state';
+  e.id = 'empty-state';
+  e.innerHTML =
+    '<div class="empty-title">SYSTEMS ONLINE</div>' +
+    '<div>Type or say “TMOS” and ask anything. Try one of these:</div>' +
+    `<div class="suggestions">${SUGGESTIONS.map(s => `<button class="suggestion">${esc(s)}</button>`).join('')}</div>`;
+  e.querySelectorAll('.suggestion').forEach(b => b.onclick = () => sendCmd(b.textContent));
+  $('chat').appendChild(e);
+}
+
+function removeEmptyState() {
+  const e = $('empty-state');
+  if (e) e.remove();
+}
+
 function showThinking() {
-  const el = document.getElementById('chat');
+  hideThinking();
+  removeEmptyState();
   _thinking = document.createElement('div');
-  _thinking.className = 'bubble thinking';
+  _thinking.className = 'bubble ai thinking';
   _thinking.innerHTML =
-    '<div class="bubble-sender" style="color:var(--dim)">T.M.O.S</div>' +
-    '<div class="bubble-text" style="color:var(--dim)"><span class="thinking-dots">thinking</span></div>';
-  el.appendChild(_thinking);
-  el.scrollTop = el.scrollHeight;
-  document.getElementById('web-wrap').classList.add('processing');
+    '<div class="bubble-head"><span class="bubble-sender">T.M.O.S</span></div>' +
+    '<div class="bubble-text"><span class="thinking-dots"><i></i><i></i><i></i></span>' +
+    '<span class="thinking-label">thinking</span></div>';
+  $('chat').appendChild(_thinking);
+  scrollChat(true);
+  setOrbState('processing', true);
 }
 
 function hideThinking() {
   if (_thinking) { _thinking.remove(); _thinking = null; }
 }
 
+function ensureStreamBubble() {
+  if (!_streamBubble) {
+    hideThinking();
+    _streamBubble = addBubble('', 'ai', { stream: true });
+    _streamBubble._raw = '';
+  }
+  return _streamBubble;
+}
+
+function onToken(tok) {
+  const b = ensureStreamBubble();
+  b._raw += tok;
+  b.querySelector('.bubble-text').innerHTML = renderMd(b._raw) + '<span class="cursor"></span>';
+  scrollChat();
+}
+
+function onStreamDone() {
+  const b = _streamBubble;
+  _streamBubble = null;
+  if (b) {
+    b.querySelector('.bubble-text').innerHTML = renderMd(b._raw);
+    if (!b._raw.trim() && !b.querySelector('.tool-chips')) b.remove();
+    else finalizeBubble(b, b._raw, 'ai');
+  }
+  setOrbState('processing', false);
+}
+
+function addToolChip(t) {
+  const b = ensureStreamBubble();
+  let chips = b.querySelector('.tool-chips');
+  if (!chips) {
+    chips = document.createElement('div');
+    chips.className = 'tool-chips';
+    b.querySelector('.bubble-text').before(chips);
+  }
+  const c = document.createElement('span');
+  c.className = 'tool-chip' + (t.ok ? '' : ' fail');
+  c.innerHTML = `${t.ok ? '✓' : '✗'} ${esc(t.label)}${t.detail ? ' <b>' + esc(t.detail) + '</b>' : ''}`;
+  if (!t.ok && t.error) c.title = t.error;
+  chips.appendChild(c);
+  scrollChat();
+}
+
+// Copy buttons on code blocks (event delegation — blocks are re-rendered while streaming)
+$('chat').addEventListener('click', e => {
+  const btn = e.target.closest('[data-copy-code]');
+  if (!btn || !bridge) return;
+  bridge.copy_text(btn.closest('.code-block').querySelector('code').textContent);
+  btn.textContent = 'Copied';
+  setTimeout(() => { btn.textContent = 'Copy'; }, 1200);
+});
+
+function clearChat() { if (bridge) bridge.clear_chat(); }
+
 // ══════════════════════════════════════════════════════════════════════════
 //  LOG
 // ══════════════════════════════════════════════════════════════════════════
-const TAGS = { sys:'SYS', ok:'OK', warn:'WARN', err:'ERR' };
-const logEl = document.getElementById('log-list');
+const TAGS = { sys: 'SYS', ok: 'OK', warn: 'WARN', err: 'ERR' };
+const logEl = $('log-list');
 
 function addLog(text, type = 'sys') {
   const d = document.createElement('div');
   d.className = 'log-entry';
-  const ts = new Date().toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
-  d.innerHTML = `<span style="color:var(--dim);opacity:.5">${ts}</span> <span class="tag-${type}">[${TAGS[type]||'SYS'}]</span> ${esc(text)}`;
+  const ts = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  d.innerHTML = `<span class="log-ts">${ts}</span> <span class="tag-${type}">[${TAGS[type] || 'SYS'}]</span> ${esc(text)}`;
   logEl.appendChild(d);
-  while (logEl.children.length > 50) logEl.removeChild(logEl.firstChild);
+  while (logEl.children.length > 80) logEl.removeChild(logEl.firstChild);
   logEl.scrollTop = logEl.scrollHeight;
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  TOASTS + CHIME
+// ══════════════════════════════════════════════════════════════════════════
+let _audioCtx = null;
+
+function chime() {
+  try {
+    _audioCtx = _audioCtx || new AudioContext();
+    const now = _audioCtx.currentTime;
+    [880, 1175, 1568].forEach((freq, i) => {
+      const o = _audioCtx.createOscillator(), g = _audioCtx.createGain();
+      const t = now + i * 0.17;
+      o.type = 'sine';
+      o.frequency.value = freq;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.22, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+      o.connect(g).connect(_audioCtx.destination);
+      o.start(t);
+      o.stop(t + 0.55);
+    });
+  } catch (e) { /* audio not available */ }
+}
+
+function showToast({ title, text, kind }) {
+  const t = document.createElement('div');
+  t.className = 'toast ' + (kind || 'ok');
+  t.innerHTML = `<div class="toast-title">${esc(title)}</div>` + (text ? `<div class="toast-text">${esc(text)}</div>` : '');
+  const close = () => { t.classList.add('out'); setTimeout(() => t.remove(), 300); };
+  t.onclick = close;
+  $('toasts').appendChild(t);
+  setTimeout(close, kind === 'alarm' ? 15000 : 2800);
+  if (kind === 'alarm') chime();
 }
 
 // ══════════════════════════════════════════════════════════════════════════
 //  TABS
 // ══════════════════════════════════════════════════════════════════════════
-function switchTab(name, btn) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
-  btn.classList.add('active');
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === 'tab-' + name));
+  try { localStorage.setItem('tmos.tab', name); } catch (e) {}
 }
+try { const t = localStorage.getItem('tmos.tab'); if (t && $('tab-' + t)) switchTab(t); } catch (e) {}
 
 // ══════════════════════════════════════════════════════════════════════════
-//  REMINDERS / NOTES
+//  REMINDERS / TIMERS / NOTES
 // ══════════════════════════════════════════════════════════════════════════
-function renderReminders(list) {
-  const el = document.getElementById('rem-list');
-  el.innerHTML = '';
-  list.forEach(r => {
-    const row = document.createElement('div');
-    row.className = 'rem-item';
-    row.innerHTML =
-      `<span>⏰  <b style="color:var(--cyan)">${esc(r.time)}</b>  ${esc(r.text)}</span>` +
-      `<button class="rem-del" onclick="bridge.del_reminder('${r.id}')">×</button>`;
-    el.appendChild(row);
-  });
+let _reminders = [];
+let _timers = [];
+
+function inWords(seconds) {
+  seconds = Math.max(0, Math.round(seconds));
+  const d = Math.floor(seconds / 86400), h = Math.floor(seconds % 86400 / 3600), m = Math.ceil(seconds % 3600 / 60);
+  if (d) return `in ${d}d ${h}h`;
+  if (h) return `in ${h}h ${m % 60 ? (m % 60) + 'm' : ''}`.trim();
+  return m <= 1 ? 'in a minute' : `in ${m} min`;
 }
+
+function renderReminders(list) {
+  _reminders = list;
+  $('rem-count').textContent = list.length || '';
+  const el = $('rem-list');
+  if (!list.length) {
+    el.innerHTML = '<div class="list-empty">No reminders yet. Add one above, or say<br>“remind me at 5pm to call mom”.</div>';
+    return;
+  }
+  el.innerHTML = list.map(r => {
+    const next = r.next ? (Date.parse(r.next) - Date.now()) / 1000 : 0;
+    const badge = r.repeat === 'daily' ? '<span class="badge">DAILY</span>' : '';
+    return `<div class="item"><div class="item-main">` +
+      `<div class="item-top"><span class="rem-time">${esc(r.time)}</span>${badge}<span class="item-meta">${esc(inWords(next))}</span></div>` +
+      `<div class="item-text">${esc(r.text)}</div></div>` +
+      `<button class="del-btn" data-del-rem="${esc(r.id)}" title="Delete reminder">×</button></div>`;
+  }).join('');
+}
+setInterval(() => { if (_reminders.length) renderReminders(_reminders); }, 30000);
 
 function addReminder() {
-  const t = document.getElementById('rem-t').value.trim();
-  const x = document.getElementById('rem-x').value.trim();
-  if (!t || !x || !bridge) return;
-  bridge.add_reminder(t, x);
-  document.getElementById('rem-t').value = '';
-  document.getElementById('rem-x').value = '';
+  const t = $('rem-t').value.trim();
+  const x = $('rem-x').value.trim();
+  if (!bridge) return;
+  if (!t) { $('rem-t').focus(); return; }
+  if (!x) { $('rem-x').focus(); return; }
+  bridge.add_reminder(t, x, $('rem-daily').checked);
+  $('rem-x').value = '';
+  $('rem-daily').checked = false;
+}
+
+function fmtClock(sec) {
+  sec = Math.max(0, Math.ceil(sec));
+  const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
+  const mm = String(m).padStart(2, '0'), ss = String(s).padStart(2, '0');
+  return h ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+}
+
+function renderTimers(list) {
+  _timers = list;
+  $('timer-count').textContent = list.length || '';
+  drawTimers();
+}
+
+function drawTimers() {
+  const el = $('timer-list');
+  if (!_timers.length) {
+    el.innerHTML = '<div class="list-empty">No timers running. Pick a preset, type a length, or say “timer 10 minutes”.</div>';
+    return;
+  }
+  const now = Date.now() / 1000;
+  el.innerHTML = _timers.map(t => {
+    const left = Math.max(0, t.ends_at - now);
+    const pct = Math.max(0, Math.min(100, left / t.seconds * 100));
+    return `<div class="item${left < 10 ? ' urgent' : ''}"><div class="item-main">` +
+      `<div class="item-top"><span class="timer-left">${fmtClock(left)}</span><span class="item-meta">${esc(t.label)}</span></div>` +
+      `<div class="timer-bar"><div style="width:${pct}%"></div></div></div>` +
+      `<button class="del-btn" data-cancel-timer="${esc(t.id)}" title="Cancel timer">×</button></div>`;
+  }).join('');
+}
+setInterval(() => { if (_timers.length) drawTimers(); }, 1000);
+
+function addTimer() {
+  const spec = $('timer-in').value.trim();
+  const label = $('timer-label').value.trim();
+  if (!spec) { $('timer-in').focus(); return; }
+  sendCmd('timer ' + spec + (label ? ' called ' + label : ''));
+  $('timer-in').value = '';
+  $('timer-label').value = '';
 }
 
 function renderNotes(list) {
-  const el = document.getElementById('note-list');
-  el.innerHTML = '';
-  list.slice().reverse().forEach(n => {
-    const row = document.createElement('div');
-    row.className = 'note-item';
-    row.innerHTML =
-      `<span>${esc(n.text)}</span>` +
-      `<span class="note-date">${esc(n.created || '')}</span>` +
-      `<button class="note-del" onclick="bridge.del_note('${n.id}')">×</button>`;
-    el.appendChild(row);
-  });
+  $('note-count').textContent = list.length || '';
+  const el = $('note-list');
+  if (!list.length) {
+    el.innerHTML = '<div class="list-empty">No notes yet. Type one above, or say “note buy milk”.</div>';
+    return;
+  }
+  el.innerHTML = list.slice().reverse().map(n =>
+    `<div class="item"><div class="item-main"><div class="item-text">${esc(n.text)}</div>` +
+    `<div class="item-meta">${esc(n.created || '')}</div></div>` +
+    `<button class="del-btn" data-copy-note="${esc(n.text)}" title="Copy note" style="font-size:11px">⧉</button>` +
+    `<button class="del-btn" data-del-note="${esc(n.id)}" title="Delete note">×</button></div>`
+  ).join('');
 }
 
 function addNote() {
-  const text = document.getElementById('note-text').value.trim();
+  const text = $('note-text').value.trim();
   if (!text || !bridge) return;
   bridge.add_note(text);
-  document.getElementById('note-text').value = '';
+  $('note-text').value = '';
 }
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-del-rem],[data-cancel-timer],[data-del-note],[data-copy-note]');
+  if (!t || !bridge) return;
+  if (t.dataset.delRem) bridge.del_reminder(t.dataset.delRem);
+  else if (t.dataset.cancelTimer) bridge.cancel_timer(t.dataset.cancelTimer);
+  else if (t.dataset.delNote) bridge.del_note(t.dataset.delNote);
+  else if (t.dataset.copyNote) bridge.copy_text(t.dataset.copyNote);
+});
 
 // ══════════════════════════════════════════════════════════════════════════
 //  BACKEND + MODEL
 // ══════════════════════════════════════════════════════════════════════════
-const GROQ_MODELS = {
-  'llama-3.3-70b-versatile': 'Llama 3.3 70B',
-  'llama-3.1-8b-instant':    'Llama 3.1 8B',
-  'qwen/qwen3-32b':          'Qwen 3 32B',
-  'moonshotai/kimi-k2-instruct': 'Kimi K2',
-  'meta-llama/llama-4-scout-17b-16e-instruct': 'Llama 4 Scout',
-};
+function setBackend(b) {
+  if (_models.backend !== b) _models = { backend: b, current: '', models: [] };
+  ['groq', 'gemini', 'ollama'].forEach(x => $('btn-' + x).classList.toggle('active', x === b));
+  const tag = $('backend-tag');
+  tag.textContent = b.toUpperCase();
+  tag.classList.toggle('gemini', b === 'gemini');
+  tag.classList.toggle('groq', b === 'groq');
+  rebuildModelDropdown();
+}
 
-const GEMINI_MODELS = {
-  'gemini-2.0-flash':      'Gemini 2.0 Flash',
-  'gemini-2.0-flash-lite': 'Gemini 2.0 Flash-Lite',
-  'gemini-1.5-flash':      'Gemini 1.5 Flash',
-  'gemini-1.5-pro':        'Gemini 1.5 Pro',
-};
+function setCurrentModel(m) {
+  _models.current = m;
+  $('model-indicator-text').textContent = 'MODEL: ' + m.toUpperCase();
+  rebuildModelDropdown();
+}
 
-const OLLAMA_MODELS = {
-  'qwen2.5':  'Qwen 2.5',
-  'llama3.3': 'Llama 3.3',
-  'mistral':  'Mistral 7B',
-  'phi4':     'Phi-4',
-  'gemma3':   'Gemma 3',
-  'llama3':   'Llama 3',
-};
-
-function rebuildModelDropdown(backend) {
-  const sel = document.getElementById('model-select');
-  const models = backend === 'groq'   ? GROQ_MODELS   :
-                 backend === 'gemini' ? GEMINI_MODELS : OLLAMA_MODELS;
-  sel.innerHTML = '';
-  for (const [k, v] of Object.entries(models)) {
-    const opt = document.createElement('option');
-    opt.value = k;
-    opt.textContent = v;
-    sel.appendChild(opt);
+function rebuildModelDropdown() {
+  const sel = $('model-select');
+  const list = _models.models.slice();
+  if (_models.current && !list.some(m => m.id === _models.current)) {
+    list.unshift({ id: _models.current, name: _models.current, desc: '' });
   }
+  sel.innerHTML = '';
+  for (const m of list) {
+    const o = new Option(m.name + (m.desc ? ' · ' + m.desc : ''), m.id);
+    o.title = m.id;
+    sel.add(o);
+  }
+  sel.value = _models.current;
 }
-rebuildModelDropdown('groq');  // default
 
-function switchBackend(b) {
-  if (bridge) bridge.switch_backend(b);
-}
-
-function switchModel(m) {
-  if (bridge) bridge.switch_model(m);
-}
+function switchBackend(b) { if (bridge) bridge.switch_backend(b); }
+function switchModel(m)   { if (bridge && m) bridge.switch_model(m); }
+function refreshModels()  { if (bridge) { bridge.refresh_models(); addLog('Refreshing model list…', 'sys'); } }
 
 // ══════════════════════════════════════════════════════════════════════════
 //  ALWAYS-LISTEN
@@ -1627,70 +2225,148 @@ function toggleAlwaysListen() {
 
 function updateListenIndicator(on) {
   _alwaysListen = on;
-  const ind = document.getElementById('listen-indicator');
-  ind.classList.toggle('on', on);
-  document.getElementById('listen-text').textContent = on ? '24/7 LISTENING' : '24/7 OFF';
+  $('listen-indicator').classList.toggle('on', on);
+  $('listen-text').textContent = on ? '24/7 LISTENING' : '24/7 OFF';
 }
 
 // ══════════════════════════════════════════════════════════════════════════
 //  SETTINGS MODAL
 // ══════════════════════════════════════════════════════════════════════════
+function applyConfig(c) {
+  _config = c;
+  $('cfg-wake').value = c.wake_word || 'tmos';
+  $('cfg-listen').checked = !!c.always_listen;
+  $('cfg-voice').checked = !c.muted;
+  $('cfg-tools').checked = c.ai_tools !== false;
+  $('cfg-stt').value = c.stt_engine || 'google';
+  $('cfg-hotkey').value = c.hotkey || '';
+  $('cfg-startup').checked = !!c.start_with_windows;
+  $('hotkey-error').textContent = c.hotkey_error || '';
+
+  const voices = $('cfg-tts-voice');
+  voices.innerHTML = '';
+  for (const [id, name] of Object.entries(c.voices || {})) voices.add(new Option(name, id));
+  voices.value = c.tts_voice;
+
+  for (const [k, id] of [['groq_api_key', 'groq-status'], ['gemini_api_key', 'gemini-status']]) {
+    const set = c['has_' + k];
+    $(id).textContent = set ? '✓ saved ' + c[k] : 'not set';
+    $(id).classList.toggle('ok', !!set);
+  }
+  $('cfg-groq-key').placeholder = c.has_groq_api_key ? 'Paste a new key to replace it' : 'gsk_…';
+  $('cfg-api-key').placeholder = c.has_gemini_api_key ? 'Paste a new key to replace it' : 'AIza…';
+
+  updateListenIndicator(!!c.always_listen);
+  const wake = (c.wake_word || 'tmos').toUpperCase();
+  $('cmd-input').placeholder = `Ask T.M.O.S anything… or say “${wake}” to wake it`;
+  $('input-hint').textContent = (c.hotkey_pretty && !c.hotkey_error ? c.hotkey_pretty + ' summon · ' : '') + '↑ history · Esc stop';
+}
+
 function openSettings() {
-  document.getElementById('settings-modal').classList.add('open');
-  document.getElementById('cfg-api-key').focus();
+  $('cfg-groq-key').value = '';
+  $('cfg-api-key').value = '';
+  $('settings-modal').classList.add('open');
+  ($('cfg-groq-key').placeholder.startsWith('gsk') ? $('cfg-groq-key') : $('cfg-wake')).focus();
 }
 
 function closeSettings() {
-  document.getElementById('settings-modal').classList.remove('open');
+  $('settings-modal').classList.remove('open');
 }
 
 function saveSettings() {
-  const gemKey  = document.getElementById('cfg-api-key').value.trim();
-  const groqKey = document.getElementById('cfg-groq-key').value.trim();
-  const wake = document.getElementById('cfg-wake').value.trim() || 'tmos';
-  const listen = document.getElementById('cfg-listen').checked;
-
   if (bridge) {
-    if (groqKey) bridge.save_groq_key(groqKey);
-    if (gemKey)  bridge.save_gemini_key(gemKey);
-    bridge.set_wake_word(wake);
-    bridge.toggle_always_listen(listen);
-    updateListenIndicator(listen);
+    bridge.save_settings(JSON.stringify({
+      groq_key:           $('cfg-groq-key').value.trim(),
+      gemini_key:         $('cfg-api-key').value.trim(),
+      wake_word:          $('cfg-wake').value.trim() || 'tmos',
+      always_listen:      $('cfg-listen').checked,
+      voice_enabled:      $('cfg-voice').checked,
+      tts_voice:          $('cfg-tts-voice').value,
+      stt_engine:         $('cfg-stt').value,
+      ai_tools:           $('cfg-tools').checked,
+      hotkey:             $('cfg-hotkey').value.trim().toLowerCase(),
+      start_with_windows: $('cfg-startup').checked,
+    }));
   }
   closeSettings();
 }
 
-function openExternal(url) {
-  if (bridge) bridge.send_command('browse ' + url);
-}
+$('settings-modal').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.type !== 'checkbox') saveSettings();
+});
+
+function openExternal(url) { if (bridge) bridge.open_url(url); }
 
 // ══════════════════════════════════════════════════════════════════════════
-//  COMMANDS
+//  COMMANDS + INPUT
 // ══════════════════════════════════════════════════════════════════════════
+let _inputHistory = [];
+let _histIdx = -1;
+try { _inputHistory = JSON.parse(localStorage.getItem('tmos.inputHistory') || '[]'); } catch (e) {}
+
 function sendCmd(cmd) { if (bridge) bridge.send_command(cmd); }
 
 function doSend() {
-  const inp = document.getElementById('cmd-input');
+  const inp = $('cmd-input');
   const cmd = inp.value.trim();
   if (!cmd || !bridge) return;
   inp.value = '';
+  _histIdx = -1;
+  if (_inputHistory[_inputHistory.length - 1] !== cmd) {
+    _inputHistory.push(cmd);
+    _inputHistory = _inputHistory.slice(-100);
+    try { localStorage.setItem('tmos.inputHistory', JSON.stringify(_inputHistory)); } catch (e) {}
+  }
   bridge.send_command(cmd);
+  updateSendButton();
+}
+
+function sendOrStop() {
+  if ($('cmd-input').value.trim()) doSend();
+  else if ((_busy || _speaking) && bridge) bridge.stop();
+}
+
+function updateSendButton() {
+  const btn = $('send-btn');
+  const stop = (_busy || _speaking) && !$('cmd-input').value.trim();
+  btn.textContent = stop ? '■ Stop' : 'Send';
+  btn.classList.toggle('stop', stop);
+  btn.title = stop ? 'Stop talking (Esc)' : 'Send (Enter)';
 }
 
 function toggleMic() { if (bridge) bridge.toggle_mic(); }
+
+const cmdInput = $('cmd-input');
+cmdInput.addEventListener('input', updateSendButton);
+cmdInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); sendOrStop(); return; }
+  if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+    if (!_inputHistory.length) return;
+    e.preventDefault();
+    if (e.key === 'ArrowUp') _histIdx = _histIdx < 0 ? _inputHistory.length - 1 : Math.max(0, _histIdx - 1);
+    else _histIdx = _histIdx < 0 ? -1 : _histIdx + 1;
+    if (_histIdx >= _inputHistory.length) _histIdx = -1;
+    cmdInput.value = _histIdx < 0 ? '' : _inputHistory[_histIdx];
+    updateSendButton();
+  }
+});
 
 // ══════════════════════════════════════════════════════════════════════════
 //  KEYBOARD SHORTCUTS
 // ══════════════════════════════════════════════════════════════════════════
 document.addEventListener('keydown', e => {
-  if (e.ctrlKey && e.key === 'm') { e.preventDefault(); toggleMic(); }
-  if (e.ctrlKey && e.key === 'l') { e.preventDefault(); document.getElementById('cmd-input').focus(); }
+  const k = e.key.toLowerCase();
+  if (e.ctrlKey && k === 'm') { e.preventDefault(); toggleMic(); }
+  if (e.ctrlKey && k === 'l') { e.preventDefault(); cmdInput.focus(); }
   if (e.ctrlKey && e.key === ',') { e.preventDefault(); openSettings(); }
   if (e.key === 'Escape') {
-    if (document.getElementById('settings-modal').classList.contains('open')) closeSettings();
-    else document.getElementById('cmd-input').value = '';
+    if ($('settings-modal').classList.contains('open')) closeSettings();
+    else if ((_busy || _speaking) && bridge) bridge.stop();
+    else { cmdInput.value = ''; updateSendButton(); }
   }
 });
+
+cmdInput.focus();
 </script>
 </body>
 </html>

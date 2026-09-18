@@ -5,6 +5,7 @@ Simple persistent note-taking stored as JSON.
 import json
 import os
 import time
+import uuid
 
 DATA_DIR  = os.path.join(os.path.expanduser('~'), '.tmos')
 DATA_FILE = os.path.join(DATA_DIR, 'notes.json')
@@ -46,7 +47,7 @@ def add(text: str, title: str = '') -> dict:
     if not text:
         return {'success': False, 'message': 'Note text is required.'}
     note = {
-        'id': str(int(time.time() * 1000)),
+        'id': uuid.uuid4().hex[:12],
         'title': title.strip() or text[:40],
         'text': text,
         'created': time.strftime('%Y-%m-%d %H:%M'),
