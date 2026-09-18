@@ -134,7 +134,7 @@ class VoiceWorker(QThread):
             with sr.Microphone(device_index=mic.resolve()[0]) as src:
                 rec.adjust_for_ambient_noise(src, duration=0.3)
                 audio = rec.listen(src, timeout=6, phrase_time_limit=12)
-            self.result.emit(stt.recognize(rec, audio))
+            self.result.emit(stt.recognize(rec, audio, purpose='command'))
         except Exception as e:
             name = type(e).__name__
             self.error.emit({'WaitTimeoutError': 'No speech heard.',
@@ -194,6 +194,9 @@ class WakeWordListener(QThread):
         rec.pause_threshold = 0.6
 
         self._running = True
+        last_error = 0.0
+        if stt.setting() in ('auto', 'local') and stt.vosk_installed() and not stt.vosk_ready():
+            stt.download_vosk_model(log=self.status_msg.emit)
         device, device_name = mic.resolve()
         try:
             source = sr.Microphone(device_index=device)
@@ -202,7 +205,7 @@ class WakeWordListener(QThread):
         except Exception as e:
             self.status_msg.emit(f'Mic init error ({device_name}): {e}')
             return
-        self.status_msg.emit(f'🎙 Listening on "{device_name}" ({stt.engine()} speech recognition).')
+        self.status_msg.emit(f'🎙 Listening on "{device_name}" — {stt.describe()}.')
 
         while self._running:
             try:
@@ -215,10 +218,14 @@ class WakeWordListener(QThread):
                 overlapped = tts.is_speaking() or tts.last_active() > started
 
                 try:
-                    text = stt.recognize(rec, audio).strip()
+                    text = stt.recognize(rec, audio, purpose='wake').strip()
                 except sr.UnknownValueError:
                     continue
-                except sr.RequestError:
+                except sr.RequestError as e:
+                    # Say so (at most once a minute) instead of failing silently.
+                    if time.time() - last_error > 60:
+                        last_error = time.time()
+                        self.status_msg.emit(f'⚠ {e}')
                     time.sleep(1)
                     continue
                 if not text:
@@ -235,6 +242,14 @@ class WakeWordListener(QThread):
 
                 self.wake_fired.emit()
                 if cmd:
+                    # The offline recognizer found the wake word; get the exact
+                    # words of the command from the more accurate engine.
+                    if stt.wake_is_local():
+                        try:
+                            exact = self._after_wake(stt.recognize(rec, audio, purpose='command'))
+                            cmd = exact or cmd
+                        except (sr.UnknownValueError, sr.RequestError):
+                            pass
                     self.command.emit(cmd)       # wake word + command in one breath
                     continue
 
@@ -244,7 +259,7 @@ class WakeWordListener(QThread):
                 try:
                     with source as src:
                         audio2 = rec.listen(src, timeout=5, phrase_time_limit=12)
-                    cmd2 = stt.recognize(rec, audio2).strip()
+                    cmd2 = stt.recognize(rec, audio2, purpose='command').strip()
                     if cmd2:
                         self.command.emit(cmd2)
                 except (sr.WaitTimeoutError, sr.UnknownValueError):

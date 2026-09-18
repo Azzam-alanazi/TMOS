@@ -134,7 +134,7 @@ class Bridge(QObject):
     @pyqtSlot(str)
     def save_settings(self, payload: str):
         """Apply everything from the Settings dialog in one go."""
-        from modules import ai, autostart, config, tts
+        from modules import ai, autostart, config, stt, tts
         try:
             s = json.loads(payload)
         except json.JSONDecodeError:
@@ -147,17 +147,16 @@ class Bridge(QObject):
             ai.set_gemini_key(s['gemini_key'])
             keys_changed = True
 
+        old_listening = (config.get('stt_engine'), config.get('mic_device') or '')
         config.update({
             'wake_word':  (s.get('wake_word') or 'tmos').strip().lower(),
             'tts_voice':  s.get('tts_voice') or config.get('tts_voice'),
-            'stt_engine': s.get('stt_engine') if s.get('stt_engine') in ('google', 'groq') else 'google',
+            'stt_engine': s.get('stt_engine') if s.get('stt_engine') in stt.ENGINES else 'auto',
+            'mic_device': (s.get('mic_device') or '').strip(),
             'ai_tools':   bool(s.get('ai_tools', True)),
         })
-
-        mic_device = (s.get('mic_device') or '').strip()
-        if mic_device != (config.get('mic_device') or ''):
-            config.set_value('mic_device', mic_device)
-            self._win.restart_listeners()
+        if (config.get('stt_engine'), config.get('mic_device')) != old_listening or keys_changed:
+            self._win.restart_listeners()     # new mic / engine / key → fresh listener
 
         voice = bool(s.get('voice_enabled', True))
         if voice == tts.is_muted():
@@ -242,6 +241,8 @@ class Bridge(QObject):
         c = config.get_all()
         c['mics'] = [m['name'] for m in mic.list_inputs()]
         c['mic_active'] = mic.resolve()[1]
+        from modules import stt
+        c['stt_describe'] = stt.describe()
         c['start_with_windows'] = autostart.is_enabled()
         c['voices'] = tts.VOICES
         c['hotkey_pretty'] = hotkey.pretty(c.get('hotkey') or '') if c.get('hotkey') else ''

@@ -1406,10 +1406,13 @@ select option { background: var(--panel); color: var(--text); }
         <div class="field-group">
           <label class="field-label" for="cfg-stt">Speech recognition</label>
           <select id="cfg-stt">
-            <option value="google">Google — free, no key needed</option>
-            <option value="groq">Groq Whisper — more accurate, uses your Groq key</option>
+            <option value="auto">Automatic — offline wake word, best engine for commands</option>
+            <option value="local">Offline only (Vosk) — private, less accurate</option>
+            <option value="groq">Groq Whisper — most accurate, uses your Groq key</option>
+            <option value="gemini">Gemini — uses your Gemini key</option>
+            <option value="google">Google — free, no key (can time out on some networks)</option>
           </select>
-          <div class="field-help">Arabic replies are read with an Arabic voice automatically.</div>
+          <div class="field-help" id="stt-help">If an engine fails, the next one is tried. Arabic replies are read with an Arabic voice automatically.</div>
         </div>
 
         <div class="field-group">
@@ -2243,7 +2246,8 @@ function applyConfig(c) {
   $('cfg-listen').checked = !!c.always_listen;
   $('cfg-voice').checked = !c.muted;
   $('cfg-tools').checked = c.ai_tools !== false;
-  $('cfg-stt').value = c.stt_engine || 'google';
+  $('cfg-stt').value = c.stt_engine || 'auto';
+  if (c.stt_describe) $('stt-help').textContent = 'Now using: ' + c.stt_describe + '. If an engine fails, the next one is tried.';
   $('cfg-hotkey').value = c.hotkey || '';
   $('cfg-startup').checked = !!c.start_with_windows;
   $('hotkey-error').textContent = c.hotkey_error || '';

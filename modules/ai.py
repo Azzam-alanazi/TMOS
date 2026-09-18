@@ -41,9 +41,11 @@ GROQ_MODELS = {
 }
 
 GEMINI_MODELS = {
-    'gemini-2.5-flash':      {'name': 'Gemini 2.5 Flash',      'desc': 'Fast & free (recommended)'},
-    'gemini-2.5-flash-lite': {'name': 'Gemini 2.5 Flash-Lite', 'desc': 'Fastest, highest free limits'},
-    'gemini-2.5-pro':        {'name': 'Gemini 2.5 Pro',        'desc': 'Most capable (low free limits)'},
+    # The "-latest" aliases always point at Google's current models, so they keep
+    # working when versions are retired (2.5 Flash-Lite already is for new keys).
+    'gemini-flash-latest':      {'name': 'Gemini Flash (latest)',      'desc': 'Fast & free (recommended)'},
+    'gemini-flash-lite-latest': {'name': 'Gemini Flash-Lite (latest)', 'desc': 'Fastest, highest free limits'},
+    'gemini-pro-latest':        {'name': 'Gemini Pro (latest)',        'desc': 'Most capable (low free limits)'},
 }
 
 OLLAMA_MODELS = {
@@ -515,8 +517,10 @@ def _gemini_stream(messages: list[dict], tools, on_tool, stop) -> Generator[str,
     contents = [{'role': 'model' if m['role'] == 'assistant' else 'user',
                  'parts': [{'text': m['content']}]} for m in messages]
     gen_cfg = {'temperature': 0.7, 'maxOutputTokens': 2048}
-    if '2.5-flash' in model:
-        gen_cfg['thinkingConfig'] = {'thinkingBudget': 0}     # answer right away
+    if 'flash' in model:
+        # Flash models "think" by default: seconds of delay for a voice assistant, and the
+        # thinking can use up the whole reply budget (an empty answer). Answer right away.
+        gen_cfg['thinkingConfig'] = {'thinkingBudget': 0}
     decls = [_gemini_decl(s) for s in tools] if tools else None
     full = ''
 
@@ -533,7 +537,10 @@ def _gemini_stream(messages: list[dict], tools, on_tool, stop) -> Generator[str,
                            params={'alt': 'sse'}, headers={'x-goog-api-key': key},
                            json=body, timeout=(10, 90), stream=True) as resp:
             if resp.status_code != 200:
-                raise BackendError(_friendly('Gemini', model, resp.status_code, _err_text(resp)))
+                err = _err_text(resp)
+                if resp.status_code == 400 and gen_cfg.pop('thinkingConfig', None):
+                    continue                  # this model can't switch thinking off — ask again without
+                raise BackendError(_friendly('Gemini', model, resp.status_code, err))
 
             text, parts, calls = '', [], []
             for chunk in _stream_lines(resp):

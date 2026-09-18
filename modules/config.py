@@ -14,14 +14,14 @@ os.makedirs(DATA_DIR, exist_ok=True)
 _DEFAULTS: dict[str, Any] = {
     'ai_backend':      'groq',          # 'groq' | 'gemini' | 'ollama'
     'gemini_api_key':  '',
-    'gemini_model':    'gemini-2.5-flash',
+    'gemini_model':    'gemini-flash-latest',
     'groq_api_key':    '',
     'groq_model':      'llama-3.3-70b-versatile',
     'ollama_model':    'qwen2.5',
     'ai_tools':        True,            # let the AI open apps, set reminders, etc.
     'wake_word':       'tmos',          # e.g. "tmos" or "hey tmos"
     'always_listen':   True,            # continuous wake-word listening
-    'stt_engine':      'google',        # 'google' (free) | 'groq' (Whisper, needs Groq key)
+    'stt_engine':      'auto',          # 'auto' | 'local' (Vosk) | 'groq' | 'gemini' | 'google'
     'mic_device':      '',              # microphone name; '' = automatic (skips virtual webcam mics)
     'voice_enabled':   True,
     'tts_voice':       'en-US-ChristopherNeural',
@@ -51,6 +51,12 @@ def _load() -> None:
     # Google has shut down the Gemini 1.x models.
     if str(_config.get('gemini_model', '')).startswith('gemini-1.'):
         _config['gemini_model'] = _DEFAULTS['gemini_model']
+    # 'google' used to be the only choice (and the default). 'auto' still falls back to it,
+    # but first tries offline recognition and any engine you have a key for.
+    if not _config.get('stt_auto_migrated'):
+        if _config.get('stt_engine') == 'google':
+            _config['stt_engine'] = 'auto'
+        _config['stt_auto_migrated'] = True
 
 
 def _save() -> None:
