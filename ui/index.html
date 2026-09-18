@@ -1218,6 +1218,12 @@ select option { background: var(--panel); color: var(--text); }
             <span>Start with Windows <small>Starts minimized in the tray when you sign in.</small></span>
           </label>
         </div>
+
+        <div class="field-group">
+          <label class="field-label">Desktop shortcut <span class="key-status" id="shortcut-status">not created</span></label>
+          <button class="modal-btn secondary" type="button" id="shortcut-btn" onclick="createShortcut()">Add T.M.O.S to the desktop</button>
+          <div class="field-help">Double-click it to start T.M.O.S, or to bring it back if it's in the tray.</div>
+        </div>
       </div>
     </div>
 
@@ -2110,6 +2116,10 @@ function applyConfig(c) {
   if (c.stt_describe) $('stt-help').textContent = 'Now using: ' + c.stt_describe + '. If an engine fails, the next one is tried.';
   $('cfg-hotkey').value = c.hotkey || '';
   $('cfg-startup').checked = !!c.start_with_windows;
+  $('shortcut-status').textContent = c.shortcut_exists ? '✓ on your desktop' : 'not created';
+  $('shortcut-status').classList.toggle('ok', !!c.shortcut_exists);
+  $('shortcut-btn').textContent = c.shortcut_exists ? 'Recreate the shortcut' : 'Add T.M.O.S to the desktop';
+  $('shortcut-btn').disabled = false;
   $('cfg-orb').value = c.orb_style || 'nebula';
   ORB.setStyle(c.orb_style || 'nebula');
   $('hotkey-error').textContent = c.hotkey_error || '';
@@ -2219,6 +2229,12 @@ $('settings-modal').addEventListener('keydown', e => {
 });
 
 function openExternal(url) { if (bridge) bridge.open_url(url); }
+
+function createShortcut() {
+  if (!bridge) return;
+  $('shortcut-btn').disabled = true;          // re-enabled when the new config arrives
+  bridge.create_shortcut();
+}
 
 // ══════════════════════════════════════════════════════════════════════════
 //  COMMANDS + INPUT

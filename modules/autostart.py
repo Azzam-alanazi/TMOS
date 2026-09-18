@@ -11,13 +11,19 @@ _RUN_KEY = r'Software\Microsoft\Windows\CurrentVersion\Run'
 _NAME    = 'TMOS'
 
 
-def command() -> str:
-    """The command line Windows runs at sign-in (pythonw = no console window)."""
+def launcher() -> tuple[str, str]:
+    """(python, main.py) that start T.M.O.S — pythonw when there is one, so no console window."""
     exe = sys.executable
     pyw = os.path.join(os.path.dirname(exe), 'pythonw.exe')
     if os.path.exists(pyw):
         exe = pyw
     main = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'main.py'))
+    return exe, main
+
+
+def command() -> str:
+    """The command line Windows runs at sign-in."""
+    exe, main = launcher()
     return f'"{exe}" "{main}" --minimized'
 
 

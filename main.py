@@ -3,8 +3,9 @@
 Three AI backends (Groq, Gemini, Ollama) with tool calling, always-on
 wake-word listening, web-animated orb, streaming responses, full command suite.
 
-    python main.py              # normal start
-    python main.py --minimized  # start in the tray (used by "Start with Windows")
+    python main.py                    # normal start
+    python main.py --minimized        # start in the tray (used by "Start with Windows")
+    python main.py --create-shortcut  # put a T.M.O.S shortcut on the desktop, then exit
 """
 
 import json
@@ -987,6 +988,12 @@ def _already_running() -> bool:
 
 
 def main():
+    if '--create-shortcut' in sys.argv:          # set-up helper: no window, just the shortcut
+        from modules import shortcut
+        r = shortcut.create()
+        print(r['message'])
+        return 0 if r['success'] else 1
+
     # If Qt/Chromium ever crashes hard, leave a Python traceback of every thread behind.
     import faulthandler
     global _crash_log

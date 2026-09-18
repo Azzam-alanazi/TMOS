@@ -123,7 +123,7 @@ def _help(ctx, m):
         '· add `every day` to repeat\n'
         '• `note buy milk` · `notes` · `copy [text]` · `clipboard` · `screenshot`\n'
         '• `calc 2^10` · `use groq / gemini / ollama` · `model list` · `model 120b`\n'
-        '• `clear` (chat) · `clear memory` (AI) · `lock` · `sleep` · `shutdown`\n'
+        '• `clear` (chat) · `clear memory` (AI) · `lock` · `sleep` · `shutdown` · `create desktop shortcut`\n'
         '• `stop` or **Esc** — stop talking · `mute` / `unmute` — voice off/on\n\n'
         'Anything else goes to the AI, which can search the web and combine these: '
         '*"what\'s the latest news on the Riyadh Metro?"* · '
@@ -646,6 +646,21 @@ def _forget(ctx, m):
         return Reply(r['message'], level='warn')
     gone = '\n'.join(f'• {t}' for t in r['forgotten'])
     return Reply(f'🧠 Forgotten:\n{gone}', speak='Done, I forgot that.')
+
+
+# ── Desktop shortcut ─────────────────────────────────────────────────────────
+
+@command(r'(?:create|make|add|put)\s+(?:a\s+|the\s+)?(?:desktop\s+)?shortcut'
+         r'(?:\s+(?:on|to)\s+(?:the\s+|my\s+)?desktop)?(?:\s+for\s+(?:you|yourself|t\.?m\.?o\.?s))?',
+         r'desktop shortcut')
+def _shortcut(ctx, m):
+    from modules import shortcut
+
+    def done(r):
+        ctx.refresh('config')
+        ctx.reply(Reply(r['message'], speak='Shortcut added to your desktop.' if r['success'] else None,
+                        level='ok' if r['success'] else 'err'))
+    ctx.run_async(shortcut.create, done)
 
 
 # ── Power ────────────────────────────────────────────────────────────────────

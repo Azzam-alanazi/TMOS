@@ -69,6 +69,14 @@ python main.py
 
 Now say **"TMOS, hello"** and it replies.
 
+### 5. Desktop shortcut (optional)
+
+```bash
+python main.py --create-shortcut
+```
+
+This puts a **T.M.O.S** shortcut with the app's icon on your desktop (the real one, even when OneDrive has moved it). It starts T.M.O.S without a console window, or brings it back if it's already running in the tray. You can also click **Add T.M.O.S to the desktop** in ⚙ Settings › System, or just say *"create a desktop shortcut"*.
+
 ---
 
 ## Backend Comparison
@@ -107,6 +115,7 @@ These built-in commands run instantly without the AI. Everything else goes to th
 | `mute` / `unmute` | Turn spoken replies off / on |
 | `clear` / `clear memory` | Clear the chat / reset the AI's memory |
 | `lock` / `sleep` / `shutdown` / `restart` / `cancel shutdown` | Power |
+| `create desktop shortcut` | Put a T.M.O.S shortcut on the desktop |
 
 ---
 
@@ -148,6 +157,7 @@ tmos/
 │   ├── weather.py       # Open-Meteo current weather + 7-day forecast
 │   ├── hotkey.py        # Global hotkey (Win32 RegisterHotKey)
 │   ├── autostart.py     # Start with Windows
+│   ├── shortcut.py      # Desktop shortcut + the app icon (.ico)
 │   └── notes.py, files.py, system_info.py, apps.py
 ├── tests/               # pytest: commands, reminders, AI streaming + tool loop, location, web, memory, media
 └── ui/

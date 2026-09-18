@@ -215,6 +215,17 @@ class Bridge(QObject):
         self._push_config()
 
     @pyqtSlot()
+    def create_shortcut(self):
+        from modules import shortcut
+        self._win.run_async(shortcut.create, self._on_shortcut)
+
+    def _on_shortcut(self, r: dict):
+        self.log_pushed.emit(r['message'], 'ok' if r['success'] else 'err')
+        self.alert_pushed.emit(json.dumps({'title': 'Desktop shortcut' if r['success'] else 'Shortcut not created',
+                                           'text': r['message'], 'kind': 'ok' if r['success'] else 'error'}))
+        self._push_config()
+
+    @pyqtSlot()
     def open_location_settings(self):
         import os
         try:
@@ -265,8 +276,9 @@ class Bridge(QObject):
         self.model_pushed.emit(ai.get_model())
 
     def _push_config(self):
-        from modules import autostart, config, hotkey, location, memory, mic, tts
+        from modules import autostart, config, hotkey, location, memory, mic, shortcut, tts
         c = config.get_all()
+        c['shortcut_exists'] = shortcut.exists()
         c['location_status'] = location.status()
         c['memory'] = memory.get_all()
         c['mics'] = [m['name'] for m in mic.list_inputs()]
